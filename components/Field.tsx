@@ -28,15 +28,13 @@ export function Field({
   error,
   maxLength,
 }: FieldProps) {
-  const { colors, font } = BRAND;
-  
-  const glassBorderHighlight = "rgba(255,255,255,0.06)";
+  const { font } = BRAND;
   
   return (
     <div className="mb-5 relative">
       <label
         className="block text-[11px] font-semibold uppercase tracking-widest mb-1.5 ml-1"
-        style={{ color: colors.white, opacity: 0.5, fontFamily: font }}
+        style={{ color: "#2c2825", opacity: 0.7, fontFamily: font }}
       >
         {label}
       </label>
@@ -44,12 +42,9 @@ export function Field({
       <div 
         className="relative flex items-center rounded-xl overflow-hidden transition-all duration-300"
         style={{
-          backgroundColor: "rgba(255,255,255,0.02)",
-          borderTop: `1px solid ${glassBorderHighlight}`,
-          borderLeft: `1px solid ${glassBorderHighlight}`,
-          borderRight: `1px solid rgba(0,0,0,0.1)`,
-          borderBottom: `1px solid rgba(0,0,0,0.1)`,
-          boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+          backgroundColor: "#ffffff",
+          border: `1px solid rgba(0,0,0,0.1)`,
+          boxShadow: "0 2px 5px rgba(0,0,0,0.02)",
           fontFamily: font,
           fontSize: 14,
           opacity: disabled ? 0.6 : 1,
@@ -59,10 +54,10 @@ export function Field({
           <div
             className="flex items-center pl-4 pr-3 border-r h-12"
             style={{
-              borderColor: "rgba(255,255,255,0.05)",
+              borderColor: "rgba(0,0,0,0.05)",
             }}
           >
-            <span className="text-white font-bold opacity-70 tracking-tight">{prefix}</span>
+            <span className="text-[#2c2825] font-bold opacity-70 tracking-tight">{prefix}</span>
           </div>
         )}
         
@@ -83,7 +78,7 @@ export function Field({
           } pr-4`}
           style={{
             backgroundColor: "transparent",
-            color: colors.white,
+            color: "#2c2825",
             ...(error && {
               boxShadow: "inset 0 0 0 1px #ef4444", 
               borderRadius: "inherit",
@@ -94,7 +89,7 @@ export function Field({
       </div>
       
       {error && (
-        <span className="text-red-400 text-[12px] font-medium mt-1.5 ml-1 block">
+        <span className="text-red-500 text-[12px] font-medium mt-1.5 ml-1 block">
           {error}
         </span>
       )}

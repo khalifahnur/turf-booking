@@ -31,31 +31,31 @@ const STATUS: Record<
 > = {
   Confirmed: {
     label: "Confirmed",
-    dot: "bg-emerald-400",
-    text: "text-emerald-400",
-    bg: "bg-emerald-400/8",
-    border: "border-emerald-400/20",
+    dot: "bg-[#00a64F]",
+    text: "text-[#00a64F]",
+    bg: "bg-[#00a64F]/10",
+    border: "border-[#00a64F]/20",
   },
   Booked: {
     label: "Confirmed",
-    dot: "bg-emerald-400",
-    text: "text-emerald-400",
-    bg: "bg-emerald-400/8",
-    border: "border-emerald-400/20",
+    dot: "bg-[#00a64F]",
+    text: "text-[#00a64F]",
+    bg: "bg-[#00a64F]/10",
+    border: "border-[#00a64F]/20",
   },
   Pending: {
     label: "Pending",
-    dot: "bg-amber-400",
-    text: "text-amber-400",
-    bg: "bg-amber-400/8",
-    border: "border-amber-400/20",
+    dot: "bg-[#fed107]",
+    text: "text-[#b09100]", 
+    bg: "bg-[#fed107]/10",
+    border: "border-[#fed107]/30",
   },
   Failed: {
     label: "Failed",
-    dot: "bg-red-400",
-    text: "text-red-400",
-    bg: "bg-red-400/8",
-    border: "border-red-400/20",
+    dot: "bg-[#E10600]",
+    text: "text-[#E10600]",
+    bg: "bg-[#E10600]/10",
+    border: "border-[#E10600]/20",
   },
 };
 
@@ -63,10 +63,10 @@ function getStatus(raw: string) {
   return (
     STATUS[raw] ?? {
       label: raw ?? "Unknown",
-      dot: "bg-white/30",
-      text: "text-white/50",
-      bg: "bg-white/5",
-      border: "border-white/10",
+      dot: "bg-[#1f4b50]/30",
+      text: "text-[#1f4b50]/50",
+      bg: "bg-[#1f4b50]/5",
+      border: "border-[#1f4b50]/10",
     }
   );
 }
@@ -75,7 +75,7 @@ function Spinner({ size = 16 }: { size?: number }) {
   return (
     <svg
       style={{ width: size, height: size }}
-      className="animate-spin text-white/40"
+      className="animate-spin text-current opacity-60"
       viewBox="0 0 24 24"
       fill="none"
     >
@@ -108,27 +108,18 @@ function Stat({
   accent?: string;
 }) {
   return (
-    <div
-      className="flex flex-col gap-1 px-6 py-5 border-r last:border-r-0"
-      style={{ borderColor: "rgba(255,255,255,0.06)" }}
-    >
-      <span
-        className="text-[11px] font-semibold uppercase tracking-[0.14em]"
-        style={{ color: "rgba(255,255,255,0.35)" }}
-      >
+    <div className="flex flex-col gap-1 px-6 py-5 border-r border-[#121e34]/10 last:border-r-0">
+      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70">
         {label}
       </span>
       <span
         className="text-2xl font-extrabold tracking-tight leading-none"
-        style={{ color: accent ?? "#e2e8f0" }}
+        style={{ color: accent ?? "#121e34" }}
       >
         {value}
       </span>
       {sub && (
-        <span
-          className="text-[11px]"
-          style={{ color: "rgba(255,255,255,0.28)" }}
-        >
+        <span className="text-[11px] font-medium text-[#1f4b50]/60">
           {sub}
         </span>
       )}
@@ -151,46 +142,42 @@ function LoginScreen({
 }) {
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-6"
-      style={{ backgroundColor: "#070b12", fontFamily: font }}
+      className="min-h-screen flex items-center justify-center p-6 bg-[#121e34]"
+      style={{ fontFamily: font }}
     >
       <style>{`
         @keyframes ssa-up { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
         .ssa-login-in { animation: ssa-up 0.45s cubic-bezier(.22,.68,0,1.2) both; }
-        .ssa-login-in-d1 { animation-delay: 0.05s; }
         .ssa-login-in-d2 { animation-delay: 0.12s; }
-        .ssa-login-in-d3 { animation-delay: 0.20s; }
-        .ssa-login-in-d4 { animation-delay: 0.29s; }
         .ssa-pw-input { transition: border-color 180ms ease, box-shadow 180ms ease; }
         .ssa-pw-input:focus {
-          border-color: rgba(136,176,63,0.55) !important;
-          box-shadow: 0 0 0 3px rgba(136,176,63,0.10);
+          border-color: rgba(136,176,63,0.8) !important;
+          box-shadow: 0 0 0 3px rgba(136,176,63,0.15);
           outline: none;
         }
       `}</style>
 
       <div className="w-full max-w-[360px] flex flex-col items-center">
-        <Link href="/" className="shrink-0 group block">
+        <Link href="/" className="shrink-0 group block mb-8">
           <div className="relative flex items-center justify-center w-24 sm:w-32 md:w-40 lg:w-48 transition-transform duration-300 group-hover:scale-105">
             <Image
-              src="/assets/logo.png"
-              alt="Muranga Seals"
+              src="/assets/icon.png"
+              alt="K-Arena Logo"
               width={1000}
               height={800}
               priority
-              className="w-full h-auto object-contain"
+              className="w-full h-auto object-contain drop-shadow-md"
             />
           </div>
         </Link>
 
         <form
           onSubmit={onSubmit}
-          className="ssa-login-in ssa-login-in-d2 flex flex-col gap-3"
+          className="ssa-login-in ssa-login-in-d2 flex flex-col gap-4 w-full"
         >
           <div className="relative">
             <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none"
-              style={{ color: "rgba(255,255,255,0.25)" }}
+              className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[#121e34]/40"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -204,37 +191,32 @@ function LoginScreen({
             </svg>
             <input
               type="password"
-              placeholder="Password"
+              placeholder="Admin Password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="ssa-pw-input w-full pl-11 pr-4 py-3 rounded-xl text-sm text-white placeholder-white/25"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.05)",
-                border: "1px solid rgba(255,255,255,0.09)",
-                fontFamily: font,
-              }}
+              className="ssa-pw-input w-full pl-11 pr-4 py-3.5 rounded-xl text-sm font-medium text-[#121e34] placeholder-[#121e34]/40 bg-white border border-white/20 shadow-lg"
+              style={{ fontFamily: font }}
             />
           </div>
 
           <button
             type="submit"
             disabled={isLoggingIn || !password}
-            className="relative flex items-center justify-center gap-2.5 w-full py-3 rounded-xl text-sm font-bold text-white transition-all active:scale-[0.98]"
+            className="relative flex items-center justify-center gap-2.5 w-full py-3.5 rounded-xl text-sm font-bold text-white transition-all active:scale-[0.98] bg-[#88b03f] hover:bg-[#769a35]"
             style={{
-              backgroundColor: "#88b03f",
-              opacity: isLoggingIn || !password ? 0.55 : 1,
+              opacity: isLoggingIn || !password ? 0.6 : 1,
               boxShadow:
                 isLoggingIn || !password
                   ? "none"
-                  : "0 4px 18px rgba(136,176,63,0.35)",
+                  : "0 8px 20px rgba(136,176,63,0.25)",
             }}
           >
             {isLoggingIn ? (
-              <Spinner size={15} />
+              <Spinner size={16} />
             ) : (
               <>
-                dashboard
+                Access Dashboard
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -335,7 +317,7 @@ export default function AdminDashboard() {
 
   if (status === "loading")
     return (
-      <div className="min-h-screen" style={{ backgroundColor: "#070b12" }} />
+      <div className="min-h-screen bg-[#F8F5F2]" />
     );
 
   if (status === "unauthenticated")
@@ -358,8 +340,8 @@ export default function AdminDashboard() {
 
   return (
     <div
-      className="min-h-screen"
-      style={{ backgroundColor: "#070b12", fontFamily: font, color: "#e2e8f0" }}
+      className="min-h-screen bg-[#F8F5F2]"
+      style={{ fontFamily: font }}
     >
       <style>{`
         @keyframes ssa-pending {
@@ -367,86 +349,48 @@ export default function AdminDashboard() {
           50%      { opacity:0.4; }
         }
         .ssa-pending-dot { animation: ssa-pending 1.6s ease-in-out infinite; }
-
         .ssa-row { transition: background 120ms ease; }
-        .ssa-row:hover { background: rgba(255,255,255,0.022); }
-
-        .ssa-filter-btn { transition: background 150ms ease, color 150ms ease, border-color 150ms ease; }
-        .ssa-search-input { transition: border-color 180ms ease, box-shadow 180ms ease; }
+        .ssa-row:hover { background: #F8F5F2; }
+        .ssa-filter-btn { transition: all 150ms ease; }
+        .ssa-search-input { transition: all 180ms ease; }
         .ssa-search-input:focus {
-          border-color: rgba(136,176,63,0.40) !important;
-          box-shadow: 0 0 0 3px rgba(136,176,63,0.08);
+          border-color: rgba(136,176,63,0.5) !important;
+          box-shadow: 0 0 0 3px rgba(136,176,63,0.1);
           outline: none;
         }
       `}</style>
 
-      <header
-        className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-8 h-[52px]"
-        style={{
-          backgroundColor: "#060a10",
-          borderBottom: "1px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <div className="flex items-center gap-3">
-           <Link href="/" className="shrink-0 group block">
-          <div className="relative flex items-center justify-center w-24 sm:w-32 md:w-40 lg:w-48 transition-transform duration-300 group-hover:scale-105">
-            <Image
-              src="/assets/logo.png"
-              alt="Muranga Seals"
-              width={1000}
-              height={800}
-              priority
-              className="w-full h-auto object-contain"
-            />
-          </div>
-        </Link>
-          <span
-            className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.14em] px-2 py-0.5 rounded"
-            style={{
-              backgroundColor: "rgba(136,176,63,0.12)",
-              color: "#88b03f",
-              border: "1px solid rgba(136,176,63,0.20)",
-            }}
-          >
-            Admin
+      <header className="sticky top-0 z-30 flex items-center justify-between px-6 sm:px-8 h-[60px] bg-white border-b border-[#121e34]/10 shadow-sm">
+        <div className="flex items-center gap-4">
+          <Link href="/" className="shrink-0 group block">
+            <div className="relative flex items-center justify-center w-24 sm:w-28 transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/assets/icon.png"
+                alt="K-Arena Logo"
+                width={500}
+                height={200}
+                priority
+                className="w-full h-auto object-contain"
+              />
+            </div>
+          </Link>
+          <span className="hidden sm:inline text-[10px] font-bold uppercase tracking-[0.14em] px-2.5 py-1 rounded bg-[#88b03f]/10 text-[#88b03f] border border-[#88b03f]/20">
+            Admin Portal
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {session?.user?.email && (
-            <span
-              className="hidden sm:block text-xs"
-              style={{ color: "rgba(255,255,255,0.28)" }}
-            >
+            <span className="hidden sm:block text-xs font-semibold text-[#1f4b50]/70">
               {session.user.email}
             </span>
           )}
           <button
             onClick={() => signOut()}
-            className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-all"
-            style={{
-              color: "rgba(255,255,255,0.45)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              backgroundColor: "transparent",
-            }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color = "#f87171";
-              (e.currentTarget as HTMLButtonElement).style.borderColor =
-                "rgba(248,113,113,0.25)";
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "rgba(248,113,113,0.06)";
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLButtonElement).style.color =
-                "rgba(255,255,255,0.45)";
-              (e.currentTarget as HTMLButtonElement).style.borderColor =
-                "rgba(255,255,255,0.07)";
-              (e.currentTarget as HTMLButtonElement).style.backgroundColor =
-                "transparent";
-            }}
+            className="flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1.5 rounded-lg transition-all text-[#1f4b50] hover:text-[#E10600] hover:bg-[#E10600]/10 border border-transparent hover:border-[#E10600]/20"
           >
             <svg
-              className="w-3.5 h-3.5"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -466,60 +410,49 @@ export default function AdminDashboard() {
       <main className="max-w-[1320px] mx-auto px-6 sm:px-8 py-8">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-[1.75rem] font-extrabold tracking-tight leading-tight text-white">
-              Bookings
+            <h1 className="text-[1.75rem] font-extrabold tracking-tight leading-tight text-[#121e34]">
+              Bookings Overview
             </h1>
-            <p
-              className="text-sm mt-1"
-              style={{ color: "rgba(255,255,255,0.35)" }}
-            >
-              {updatedLabel && (
-                <span style={{ color: "rgba(255,255,255,0.20)" }}>
-                  {" "}
-                  Updated {updatedLabel}
-                </span>
-              )}
+            <p className="text-sm font-medium mt-1 text-[#1f4b50]/70">
+              {updatedLabel && <span>Updated {updatedLabel}</span>}
             </p>
           </div>
         </div>
-        <div
-          className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl overflow-hidden mb-6"
-          style={{
-            backgroundColor: "#0c1220",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
+        
+        <div className="grid grid-cols-2 sm:grid-cols-4 rounded-2xl overflow-hidden mb-8 bg-white border border-[#121e34]/10 shadow-sm">
           <Stat label="Total" value={stats.total} sub="all bookings" />
           <Stat
             label="Confirmed"
             value={stats.confirmed}
             sub="paid & active"
-            accent="#4ade80"
+            accent="#00a64F"
           />
           <Stat
             label="Pending"
             value={stats.pending}
             sub="awaiting M-Pesa"
-            accent="#fbbf24"
+            accent="#d9b300"
+          />
+          <Stat
+            label="Failed"
+            value={stats.failed}
+            sub="unsuccessful"
+            accent="#E10600"
           />
         </div>
+
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 p-1 bg-white border border-[#121e34]/10 rounded-xl shadow-sm">
             {FILTERS.map(({ key, label }) => {
               const active = statusFilter === key;
               return (
                 <button
                   key={key}
                   onClick={() => setStatusFilter(key)}
-                  className="ssa-filter-btn text-[12px] font-semibold px-3.5 py-1.5 rounded-lg"
+                  className="ssa-filter-btn text-[12px] font-bold px-4 py-1.5 rounded-lg"
                   style={{
-                    backgroundColor: active
-                      ? "rgba(136,176,63,0.14)"
-                      : "rgba(255,255,255,0.04)",
-                    color: active ? "#88b03f" : "rgba(255,255,255,0.45)",
-                    border: active
-                      ? "1px solid rgba(136,176,63,0.30)"
-                      : "1px solid rgba(255,255,255,0.07)",
+                    backgroundColor: active ? "#88b03f" : "transparent",
+                    color: active ? "#ffffff" : "#1f4b50",
                   }}
                 >
                   {label}
@@ -527,10 +460,10 @@ export default function AdminDashboard() {
               );
             })}
           </div>
-          <div className="relative w-full sm:w-64">
+
+          <div className="relative w-full sm:w-72">
             <svg
-              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none"
-              style={{ color: "rgba(255,255,255,0.25)" }}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-[#1f4b50]/50"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -538,7 +471,7 @@ export default function AdminDashboard() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth="2"
+                strokeWidth="2.5"
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               />
             </svg>
@@ -547,72 +480,37 @@ export default function AdminDashboard() {
               placeholder="Search team, phone, date…"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="ssa-search-input w-full text-[13px] text-white pl-9 pr-9 py-2 rounded-xl"
-              style={{
-                backgroundColor: "rgba(255,255,255,0.04)",
-                border: "1px solid rgba(255,255,255,0.08)",
-                fontFamily: font,
-                color: "#e2e8f0",
-              }}
+              className="ssa-search-input w-full text-[13px] font-medium text-[#121e34] pl-10 pr-9 py-2.5 rounded-xl bg-white border border-[#121e34]/10 shadow-sm placeholder-[#1f4b50]/40"
+              style={{ fontFamily: font }}
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/60 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1f4b50]/40 hover:text-[#E10600] transition-colors"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             )}
           </div>
         </div>
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{
-            backgroundColor: "#0c1220",
-            border: "1px solid rgba(255,255,255,0.07)",
-          }}
-        >
+
+        <div className="rounded-2xl overflow-hidden bg-white border border-[#121e34]/10 shadow-sm">
           <div
             className="overflow-x-auto"
             style={{
               scrollbarWidth: "thin",
-              scrollbarColor: "rgba(255,255,255,0.08) transparent",
+              scrollbarColor: "rgba(18,30,52,0.1) transparent",
             }}
           >
-            <table
-              className="w-full text-left border-collapse"
-              style={{ minWidth: 780 }}
-            >
+            <table className="w-full text-left border-collapse" style={{ minWidth: 780 }}>
               <thead>
-                <tr
-                  style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}
-                >
-                  {[
-                    "Date & Time",
-                    "Pitch",
-                    "Team / Rep",
-                    "Phone",
-                    "Status",
-                  ].map((h) => (
+                <tr className="border-b border-[#121e34]/10 bg-[#F8F5F2]">
+                  {["Date & Time", "Pitch", "Team / Rep", "Phone", "Status"].map((h) => (
                     <th
                       key={h}
-                      className="px-6 py-3.5 text-[10px] font-bold uppercase tracking-[0.14em]"
-                      style={{
-                        color: "rgba(255,255,255,0.28)",
-                        backgroundColor: "#0a0f1b",
-                      }}
+                      className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70"
                     >
                       {h}
                     </th>
@@ -624,22 +522,16 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-16 text-center">
-                      <div
-                        className="flex items-center justify-center gap-2.5"
-                        style={{ color: "rgba(255,255,255,0.25)" }}
-                      >
-                        <Spinner size={16} />
-                        <span className="text-sm">Loading bookings…</span>
+                      <div className="flex items-center justify-center gap-2.5 text-[#1f4b50]/60">
+                        <Spinner size={18} />
+                        <span className="text-sm font-semibold">Loading bookings…</span>
                       </div>
                     </td>
                   </tr>
                 ) : filteredBookings.length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-6 py-16 text-center">
-                      <p
-                        className="text-sm font-medium"
-                        style={{ color: "rgba(255,255,255,0.22)" }}
-                      >
+                      <p className="text-sm font-bold text-[#1f4b50]/60">
                         {searchTerm || statusFilter !== "all"
                           ? "No bookings match your filters."
                           : "No bookings yet."}
@@ -655,19 +547,14 @@ export default function AdminDashboard() {
                         key={idx}
                         className="ssa-row"
                         style={{
-                          borderBottom: isLast
-                            ? "none"
-                            : "1px solid rgba(255,255,255,0.04)",
+                          borderBottom: isLast ? "none" : "1px solid rgba(18,30,52,0.05)",
                         }}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className="text-[13px] font-semibold text-white">
+                          <span className="text-[13px] font-bold text-[#121e34]">
                             {formatDate(b.date)}
                           </span>
-                          <span
-                            className="block text-[11px] mt-0.5 font-mono"
-                            style={{ color: "rgba(255,255,255,0.35)" }}
-                          >
+                          <span className="block text-[11px] mt-0.5 font-mono font-medium text-[#1f4b50]/70">
                             {b.time}
                           </span>
                         </td>
@@ -676,35 +563,23 @@ export default function AdminDashboard() {
                           <span
                             className="inline-block text-[11px] font-bold px-2.5 py-1 rounded-md"
                             style={{
-                              backgroundColor:
-                                b.pitchType === "8Aside"
-                                  ? "rgba(31,75,80,0.55)"
-                                  : "rgba(35,62,149,0.30)",
-                              color:
-                                b.pitchType === "8Aside"
-                                  ? "#6ecdd4"
-                                  : "#8babff",
+                              backgroundColor: b.pitchType === "8Aside" ? "rgba(31,75,80,0.1)" : "rgba(136,176,63,0.15)",
+                              color: b.pitchType === "8Aside" ? "#1f4b50" : "#88b03f",
                             }}
                           >
                             {b.pitchType === "8Aside" ? "8-Aside" : "5-Aside"}
                           </span>
                         </td>
                         <td className="px-6 py-4 max-w-[200px]">
-                          <span className="block text-[13px] font-semibold text-white truncate">
+                          <span className="block text-[13px] font-bold text-[#121e34] truncate">
                             {b.teamName || "—"}
                           </span>
-                          <span
-                            className="block text-[11px] mt-0.5 truncate"
-                            style={{ color: "rgba(255,255,255,0.35)" }}
-                          >
+                          <span className="block text-[11px] font-semibold mt-0.5 truncate text-[#1f4b50]/60">
                             {b.userName || "—"}
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span
-                            className="font-mono text-[12px]"
-                            style={{ color: "rgba(255,255,255,0.60)" }}
-                          >
+                          <span className="font-mono font-semibold text-[12px] text-[#1f4b50]/80">
                             {b.phoneNumber || "—"}
                           </span>
                         </td>
@@ -730,26 +605,14 @@ export default function AdminDashboard() {
           </div>
 
           {!isLoading && filteredBookings.length > 0 && (
-            <div
-              className="px-6 py-3 flex items-center justify-between"
-              style={{
-                borderTop: "1px solid rgba(255,255,255,0.05)",
-                backgroundColor: "#0a0f1b",
-              }}
-            >
-              <span
-                className="text-[11px]"
-                style={{ color: "rgba(255,255,255,0.22)" }}
-              >
+            <div className="px-6 py-3.5 flex items-center justify-between border-t border-[#121e34]/10 bg-[#F8F5F2]">
+              <span className="text-[11px] font-bold text-[#1f4b50]/60">
                 {filteredBookings.length === (bookings as any[]).length
                   ? `${filteredBookings.length} bookings`
                   : `${filteredBookings.length} of ${(bookings as any[]).length} bookings`}
               </span>
-              <span
-                className="text-[11px]"
-                style={{ color: "rgba(255,255,255,0.18)" }}
-              >
-                Auto-refreshes every 10 s
+              <span className="text-[11px] font-semibold text-[#1f4b50]/50">
+                Auto-refreshes every 10s
               </span>
             </div>
           )}

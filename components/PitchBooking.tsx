@@ -134,7 +134,6 @@ export default function PitchBooking({
   const handlePitchSelect = (slot: TimeSlot, pitchType: PitchType) => {
     setSelectedSlot(slot);
     setSelectedPitchType(pitchType);
-    setIsModalOpen(true);
     setFormData({ userName: "", teamName: "", phoneNumber: "" });
   };
 
@@ -157,36 +156,54 @@ export default function PitchBooking({
   };
 
   return (
-    <div className="min-h-screen bg-[#1f4b50] text-white" style={{ fontFamily: font }}>
-      <HeroSection
-        navbar={<Navbar brandLogo={brandLogo} navActions={navActions} />}
-        bookingCard={
-          <BookingCard
-            availableDays={availableDays}
-            selectedDate={selectedDate}
-            onDaySelect={setSelectedDate}
-            monthLabel={monthLabel}
-            currentSlots={currentSlots}
-            slotStatuses={Array.isArray(slotStatuses) ? slotStatuses : []}
-            onPitchSelect={handlePitchSelect}
-          />
-        }
-        heroTitle={heroTitle}
-        heroSubtitle={heroSubtitle}
-        heroExtra={heroExtra}
-        membershipWidget={membershipWidget}
-        slideIndicator={slideIndicator}
-      />
+    <div className="relative text-[#2c2825] bg-[#1f4b50]">
+      <div className="fixed bottom-0 left-0 w-full z-0 h-[100svh] overflow-hidden pointer-events-none">
+        <div className="pointer-events-auto h-full w-full">
+          {footer ?? <FooterSection />}
+        </div>
+      </div>
+      <div className="relative z-10 bg-[#f8f5f2] rounded-b-[40px] lg:rounded-b-[60px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden mb-[100svh]">
+        <HeroSection
+          navbar={<Navbar brandLogo={brandLogo}/>}
+          bookingCard={
+            <BookingCard
+              availableDays={availableDays}
+              selectedDate={selectedDate}
+              onDaySelect={(day) => {
+                setSelectedDate(day);
+                setSelectedSlot(null);
+                setSelectedPitchType(null);
+                setIsModalOpen(true);
+              }}
+              monthLabel={monthLabel}
+              onOpenSlots={() => {
+                setSelectedSlot(null);
+                setSelectedPitchType(null);
+                setIsModalOpen(true);
+              }}
+            />
+          }
+          heroTitle={heroTitle}
+          heroSubtitle={heroSubtitle}
+          heroExtra={heroExtra}
+        />
 
-      {testimonials ?? <TestimonialsSection />}
-      {footer ?? <FooterSection />}
-      
+        {testimonials ?? <TestimonialsSection />}
+      </div>
+
       <BookingSheet
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        selectedSlot={selectedSlot}
         selectedDate={selectedDate}
+        currentSlots={currentSlots}
+        slotStatuses={Array.isArray(slotStatuses) ? slotStatuses : []}
+        onPitchSelect={handlePitchSelect}
+        selectedSlot={selectedSlot}
         selectedPitchType={selectedPitchType}
+        onBackToSlots={() => {
+          setSelectedSlot(null);
+          setSelectedPitchType(null);
+        }}
         formData={formData}
         onFormChange={setFormData}
         onSubmit={handleBookingSubmit}

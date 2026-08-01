@@ -11,7 +11,7 @@ const TESTIMONIALS = [
     role: "Business person",
     avatar: "https://i.pravatar.cc/80?img=33",
     image:
-      "https://images.unsplash.com/photo-1584120075590-9876c53cb48c?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      "https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=900&q=80&auto=format&fit=crop",
   },
   {
     id: 2,
@@ -21,7 +21,7 @@ const TESTIMONIALS = [
     role: "Team Captain",
     avatar: "https://i.pravatar.cc/80?img=11",
     image:
-      "https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=900&q=80&auto=format&fit=crop",
+      "https://images.unsplash.com/photo-1584120075590-9876c53cb48c?q=80&w=870&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 ];
 
@@ -49,7 +49,7 @@ export default function TestimonialsSection() {
               Testimonials
             </span>
             <h2
-              className="font-extrabold text-gray-900 leading-tight"
+              className="font-playfair font-semibold text-gray-900 leading-tight"
               style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
             >
               What Our Players Say
@@ -69,7 +69,7 @@ export default function TestimonialsSection() {
               onClick={next}
               aria-label="Next testimonial"
               className="w-12 h-12 rounded-full flex items-center justify-center text-white hover:scale-105 transition-transform"
-              style={{ backgroundColor: "#1e4d28" }}
+              style={{ backgroundColor: "#88b03f" }}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -100,10 +100,10 @@ export default function TestimonialsSection() {
               }}
               aria-hidden="true"
             >
-              "
+              &quot;
             </div>
 
-            <h3 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-5 leading-tight">
+            <h3 className="text-2xl sm:text-3xl font-playfair font-semibold text-gray-900 mb-5 leading-tight">
               {t.quote}
             </h3>
 
@@ -150,7 +150,7 @@ export default function TestimonialsSection() {
             onClick={next}
             aria-label="Next testimonial"
             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-            style={{ backgroundColor: "#1e4d28" }}
+            style={{ backgroundColor: "#88b03f" }}
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

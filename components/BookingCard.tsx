@@ -1,17 +1,15 @@
 "use client";
 
-import type { DayInfo, PitchType, TimeSlot } from "@/lib/types";
-import DayPicker from "./DayPicker";
-import SlotCard from "./SlotCard";
+import type { DayInfo } from "@/lib/types";
+import { CalendarIcon, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import React, { useMemo } from "react";
 
 interface BookingCardProps {
   availableDays: DayInfo[];
   selectedDate: DayInfo | null;
   onDaySelect: (day: DayInfo) => void;
   monthLabel: string;
-  currentSlots: TimeSlot[];
-  slotStatuses: any[];
-  onPitchSelect: (slot: TimeSlot, pitchType: PitchType) => void;
+  onOpenSlots: () => void;
 }
 
 export default function BookingCard({
@@ -19,66 +17,76 @@ export default function BookingCard({
   selectedDate,
   onDaySelect,
   monthLabel,
-  currentSlots,
-  slotStatuses,
-  onPitchSelect,
+  onOpenSlots,
 }: BookingCardProps) {
+  const calendarCells = useMemo(() => {
+    if (availableDays.length === 0) return [];
+    const firstDay = availableDays[0];
+    const firstDow = firstDay.dateObj.getDay(); 
+    const cells: (DayInfo | null)[] = Array(firstDow).fill(null);
+    return [...cells, ...availableDays.slice(0, 35 - firstDow)];
+  }, [availableDays]);
+
+  const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
   return (
-    <div
-      className="w-full rounded-[28px] p-6 sm:p-7 relative overflow-hidden"
-      style={{
-        background: "rgba(255,255,255,0.09)",
-        backdropFilter: "blur(28px)",
-        WebkitBackdropFilter: "blur(28px)",
-        border: "1px solid rgba(255,255,255,0.2)",
-        boxShadow: "0 32px 80px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.14)",
-      }}
-    >
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -top-16 -right-16 w-56 h-56 rounded-full blur-[90px]"
-        style={{ background: "rgba(198,255,0,0.10)" }}
-      />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute -bottom-16 -left-16 w-44 h-44 rounded-full blur-[80px]"
-        style={{ background: "rgba(59,130,246,0.07)" }}
-      />
+    <div className="relative mt-4 lg:mt-0 w-full">
+      {/* Kept the card white, but updated the shadow to use a subtle Navy Blue tint */}
+      <div className="bg-[#f8f5f2] rounded-[24px] lg:rounded-[28px] p-5 lg:p-6 pt-10 lg:pt-6 shadow-[0_15px_40px_rgba(18,30,52,0.15)] flex flex-col sm:flex-row gap-5 relative z-0">
+        
+        <div className="flex flex-col justify-between sm:w-[45%] lg:ml-7 mt-1 lg:mt-2">
+          <div>
+            {/* Title: Navy Blue */}
+            <h3 className="text-base lg:text-lg font-bold text-[#121e34]">Book Your Slot</h3>
+            {/* Subtitle: Dark Teal */}
+            <p className="text-[10px] lg:text-[11px] font-medium text-[#1f4b50] mt-1 lg:mt-1.5 max-w-[140px]">Because you deserve the best.</p>
+          </div>
+        </div>
 
-      <div className="relative">
-        <DayPicker
-          days={availableDays}
-          selectedDate={selectedDate}
-          onDaySelect={onDaySelect}
-          monthLabel={monthLabel}
-        />
+        <div className="sm:w-[55%] mt-1 lg:mt-0">
+          <div className="flex items-center justify-between mb-2 lg:mb-3 px-1">
+            {/* Chevron Buttons: Dark Teal icons, Cream hover background */}
+            <button className="text-[#1f4b50] hover:bg-[#F8F5F2] p-1 rounded-full transition-colors">
+              <ChevronLeft size={12} />
+            </button>
+            {/* Month Label: Navy Blue */}
+            <span className="text-[11px] lg:text-xs font-bold text-[#121e34]">{monthLabel}</span>
+            <button className="text-[#1f4b50] hover:bg-[#F8F5F2] p-1 rounded-full transition-colors">
+              <ChevronRight size={12} />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-7 gap-y-1 lg:gap-y-1.5 gap-x-1 text-center">
+            {WEEKDAYS.map((d, i) => (
+              // Weekdays: Slightly faded Navy Blue
+              <div key={i} className="text-[9px] lg:text-[10px] font-bold text-[#121e34]/70 mb-1">{d}</div>
+            ))}
+            
+            {calendarCells.map((day, i) => {
+              if (!day) return <div key={`empty-${i}`} />;
+              
+              const isSelected = selectedDate?.fullDateStr === day.fullDateStr;
+              
+              return (
+                <button
+                  key={day.fullDateStr}
+                  onClick={() => onDaySelect(day)}
+                  className={`w-5 h-5 lg:w-6 lg:h-6 mx-auto flex items-center justify-center rounded-full text-[9px] lg:text-[10px] transition-colors ${
+                    isSelected
+                      // Selected state: Brand Green background, White text, and a soft Green shadow
+                      ? "bg-[#88b03f] text-white font-bold shadow-md shadow-[#88b03f]/30"
+                      // Unselected state: Navy text, Cream hover background
+                      : "text-[#121e34] hover:bg-[#F8F5F2] font-semibold"
+                  }`}
+                >
+                  {day.dateNum}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
       </div>
-
-      <div
-        className="relative flex flex-col gap-2.5 overflow-y-auto pr-1 pb-1 -mr-1"
-        style={{
-          scrollbarWidth: "thin",
-          scrollbarColor: "rgba(255,255,255,0.14) transparent",
-        }}
-      >
-        {currentSlots.length > 0 ? (
-          currentSlots.map((slot) => (
-            <SlotCard
-              key={slot.timeRange}
-              slot={slot}
-              selectedDateStr={selectedDate?.fullDateStr ?? ""}
-              slotStatuses={slotStatuses}
-              onPitchSelect={onPitchSelect}
-            />
-          ))
-        ) : (
-          <p className="text-center text-white/45 py-8 text-sm">
-            No sessions available for this day.
-          </p>
-        )}
-      </div>
-
     </div>
   );
 }

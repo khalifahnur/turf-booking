@@ -13,15 +13,15 @@ export interface BookingRecord {
 
 function StatusDot({ status }: { status?: string }) {
   const baseColor = !status
-    ? BRAND.colors.vibrantGreen
+    ? "#88b03f"
     : status === "Pending"
-    ? BRAND.colors.electricYellow
-    : BRAND.colors.red;
+    ? "#fed107"
+    : "#E10600";
 
   return (
     <span
-      className={`w-2 h-2 sm:w-[9px] sm:h-[9px] rounded-full shrink-0 mt-0.5 sm:mt-1 ${
-        status === "Pending" ? "pending-pulse" : ""
+      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 mt-0.5 sm:mt-1 ${
+        status === "Pending" ? "animate-pulse" : ""
       }`}
       style={{ backgroundColor: baseColor }}
       aria-hidden="true"
@@ -49,7 +49,7 @@ export default function SlotCard({
   onPitchSelect,
 }: SlotCardProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const { colors, font } = BRAND;
+  const { font } = BRAND;
 
   const safeStatuses = Array.isArray(slotStatuses) ? slotStatuses : [];
 
@@ -89,44 +89,31 @@ export default function SlotCard({
 
   return (
     <article
-      className="slot-enter rounded-xl overflow-hidden shadow-sm hover:shadow transition-shadow duration-300"
-      style={{
-        fontFamily: font,
-        backgroundColor: colors.surface1,
-        border: "1px solid rgba(255,255,255,0.07)",
-      }}
+      className="rounded-lg overflow-hidden shadow-sm transition-all duration-300 border border-[#121e34]/10 bg-white"
+      style={{ fontFamily: font }}
     >
       <header
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-3.5 py-3 sm:px-5 sm:py-4 cursor-pointer hover:bg-white/5 transition-colors duration-200"
-        style={{ 
-          borderBottom: isOpen ? "1px solid rgba(255,255,255,0.06)" : "1px solid transparent" 
-        }}
+        className={`flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 cursor-pointer hover:bg-[#F8F5F2] transition-colors duration-200 ${
+          isOpen ? "border-b border-[#121e34]/10" : ""
+        }`}
       >
         <time
-          className="font-mono text-base sm:text-xl font-extrabold tracking-tight"
+          className="font-mono text-sm sm:text-base font-bold tracking-tight text-[#121e34]"
           dateTime={slot.startTime}
-          style={{ color: colors.white }}
         >
           {slot.timeRange}
         </time>
 
-        <div className="flex items-center gap-3">
-          <span
-            className="text-[10px] sm:text-xs font-bold px-2 py-1 sm:px-2.5 sm:py-1 rounded-full"
-            style={{
-              backgroundColor: "rgba(136,176,63,0.14)",
-              color: colors.limeGreen,
-            }}
-          >
+        <div className="flex items-center gap-2.5">
+          <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#1f4b50]/10 text-[#1f4b50]">
             2 hr Session
           </span>
 
           <svg
-            className={`w-5 h-5 transition-transform duration-300 ease-in-out ${
+            className={`w-4 h-4 transition-transform duration-300 ease-in-out text-[#1f4b50] ${
               isOpen ? "rotate-180" : "rotate-0"
             }`}
-            style={{ color: "rgba(255,255,255,0.4)" }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -141,43 +128,39 @@ export default function SlotCard({
           isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
         }`}
       >
-        <div className="overflow-hidden">
-          <div className="p-2 sm:p-3 flex flex-col gap-1.5 sm:gap-2">
+        <div className="overflow-hidden bg-[#F8F5F2]/50">
+          <div className="p-2 flex flex-col gap-1.5">
             {displayItems.map(({ id, pitch, status }) => {
               const isAvailable = !status;
               const isPending = status === "Pending";
               const isBooked = status === "Confirmed" || status === "Booked";
 
               const rowBg = isPending
-                ? "rgba(254,209,7,0.07)"
+                ? "#fffbeb"
                 : isBooked
-                ? "rgba(225,6,0,0.06)"
-                : "rgba(255,255,255,0.04)";
+                ? "#fef2f2"
+                : "#ffffff";
 
               const rowBorder = isPending
-                ? "rgba(254,209,7,0.22)"
+                ? "#fed107"
                 : isBooked
-                ? "rgba(225,6,0,0.18)"
-                : "rgba(255,255,255,0.07)";
+                ? "#E10600"
+                : "#121e341a";
 
-              const priceColor = isBooked
-                ? "rgba(255,255,255,0.25)"
-                : colors.electricYellow;
+              const priceColor = isBooked ? "#9ca3af" : "#121e34";
 
               return (
                 <button
                   key={id}
                   onClick={(e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     if (isAvailable) onPitchSelect(slot, pitch.type);
                   }}
                   disabled={!isAvailable}
-                  aria-label={`Book ${pitch.label} for ${slot.timeRange} — ${statusText(
-                    status
-                  )}`}
-                  className={`w-full flex items-center gap-2.5 sm:gap-3 px-3 py-2.5 sm:px-4 sm:py-3.5 rounded-lg border text-left transition-all duration-200 ${
+                  aria-label={`Book ${pitch.label} for ${slot.timeRange} — ${statusText(status)}`}
+                  className={`w-full flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-md border text-left transition-all duration-200 ${
                     isAvailable
-                      ? "pitch-row-available cursor-pointer hover:bg-white/5 hover:-translate-y-[1px] active:scale-[0.99]"
+                      ? "cursor-pointer hover:shadow-sm hover:-translate-y-[1px] active:scale-[0.99]"
                       : "cursor-not-allowed opacity-60"
                   }`}
                   style={{
@@ -188,31 +171,19 @@ export default function SlotCard({
                   <StatusDot status={status} />
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span
-                        className="font-bold text-xs sm:text-[13px]"
-                        style={{ color: colors.white }}
-                      >
-                        {pitch.label}
-                      </span>
-                    </div>
+                    <span className="font-semibold text-[11px] sm:text-xs text-[#121e34]">
+                      {pitch.label}
+                    </span>
                   </div>
 
                   <div className="text-right shrink-0">
-                    <p
-                      className="font-extrabold text-xs sm:text-[13px]"
-                      style={{ color: priceColor }}
-                    >
+                    <p className="font-bold text-[11px] sm:text-xs" style={{ color: priceColor }}>
                       {KSH(pitch.price)}
                     </p>
                     <p
-                      className="text-[10px] sm:text-[11px] font-semibold mt-0.5 sm:mt-1"
+                      className="text-[9px] sm:text-[10px] font-semibold mt-0.5"
                       style={{
-                        color: isPending
-                          ? colors.electricYellow
-                          : isBooked
-                          ? colors.red
-                          : colors.vibrantGreen,
+                        color: isPending ? "#fed107" : isBooked ? "#E10600" : "#88b03f",
                       }}
                     >
                       {statusText(status)}
@@ -222,8 +193,7 @@ export default function SlotCard({
                   {isAvailable && (
                     <svg
                       aria-hidden="true"
-                      className="shrink-0 w-3.5 h-3.5 sm:w-4 sm:h-4 ml-1"
-                      style={{ color: "rgba(255,255,255,0.28)" }}
+                      className="shrink-0 w-3 h-3 sm:w-3.5 sm:h-3.5 ml-1 text-[#88b03f]"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
