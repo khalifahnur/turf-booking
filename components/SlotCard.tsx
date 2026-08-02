@@ -1,5 +1,3 @@
-"use client";
-
 import { BRAND, KSH, PITCH_OPTIONS } from "@/lib/booking";
 import { PitchType, TimeSlot } from "@/lib/types";
 import React, { useState } from "react";
@@ -11,29 +9,11 @@ export interface BookingRecord {
   time: string;
 }
 
-function StatusDot({ status }: { status?: string }) {
-  const baseColor = !status
-    ? "#88b03f"
-    : status === "Pending"
-    ? "#fed107"
-    : "#E10600";
-
-  return (
-    <span
-      className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 mt-0.5 sm:mt-1 ${
-        status === "Pending" ? "animate-pulse" : ""
-      }`}
-      style={{ backgroundColor: baseColor }}
-      aria-hidden="true"
-    />
-  );
-}
-
-function statusText(status?: string): string {
-  if (!status) return "Available";
-  if (status === "Pending") return "Awaiting Payment";
-  return "Booked";
-}
+const INK = "#121e34";
+const TEAL = "#1f4b50";
+const GO = "#88b03f";
+const CAUTION = "#fed107";
+const STOP = "#E10600";
 
 interface SlotCardProps {
   slot: TimeSlot;
@@ -57,14 +37,14 @@ export default function SlotCard({
     (item) =>
       item.time === slot.timeRange &&
       item.pitchType === "5Aside" &&
-      item.date === selectedDateStr
+      item.date === selectedDateStr,
   );
 
   const record8Aside = safeStatuses.find(
     (item) =>
       item.time === slot.timeRange &&
       item.pitchType === "8Aside" &&
-      item.date === selectedDateStr
+      item.date === selectedDateStr,
   );
 
   const status5Aside = record5Aside?.status;
@@ -77,9 +57,17 @@ export default function SlotCard({
 
   if (pitch5 && pitch8) {
     if (status8Aside) {
-      displayItems.push({ id: "8aside-1", pitch: pitch8, status: status8Aside });
+      displayItems.push({
+        id: "8aside-1",
+        pitch: pitch8,
+        status: status8Aside,
+      });
     } else if (status5Aside) {
-      displayItems.push({ id: "5aside-1", pitch: pitch5, status: status5Aside });
+      displayItems.push({
+        id: "5aside-1",
+        pitch: pitch5,
+        status: status5Aside,
+      });
       displayItems.push({ id: "5aside-2", pitch: pitch5, status: undefined });
     } else {
       displayItems.push({ id: "5aside-1", pitch: pitch5, status: undefined });
@@ -87,67 +75,101 @@ export default function SlotCard({
     }
   }
 
+  const hasAvailablePitch = displayItems.some((item) => !item.status);
+
+  const shouldShowContent = isOpen || !hasAvailablePitch ;
+
   return (
     <article
-      className="rounded-lg overflow-hidden shadow-sm transition-all duration-300 border border-[#121e34]/10 bg-white"
+      className="relative overflow-hidden rounded-[18px] border border-[#121e34]/10 bg-white shadow-[0_1px_3px_rgba(18,30,52,0.06)]"
       style={{ fontFamily: font }}
     >
       <header
-        onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center justify-between px-3 py-2.5 sm:px-4 sm:py-3 cursor-pointer hover:bg-[#F8F5F2] transition-colors duration-200 ${
-          isOpen ? "border-b border-[#121e34]/10" : ""
-        }`}
+        onClick={() => {
+          if (hasAvailablePitch) {
+            setIsOpen(!isOpen);
+          }
+        }}
+        aria-expanded={shouldShowContent}
+        className={`group relative flex flex-wrap items-center justify-between gap-x-2 gap-y-1 px-3 py-2.5 transition-colors duration-200 sm:gap-x-3 sm:px-5 sm:py-3.5 ${
+          hasAvailablePitch ? "cursor-pointer hover:bg-[#F8F5F2]/70" : ""
+        } ${shouldShowContent ? "border-b border-[#121e34]/[0.08]" : ""}`}
       >
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -left-4 -top-4 h-8 w-8 rounded-full border border-[#1f4b50]/15"
+        />
+
         <time
-          className="font-mono text-sm sm:text-base font-bold tracking-tight text-[#121e34]"
+          className="font-mono text-sm font-bold tabular-nums tracking-tight text-[#121e34] sm:text-base"
           dateTime={slot.startTime}
         >
           {slot.timeRange}
         </time>
 
-        <div className="flex items-center gap-2.5">
-          <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2 sm:py-1 rounded-full bg-[#1f4b50]/10 text-[#1f4b50]">
-            2 hr Session
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          <span
+            className="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold normal-case tracking-normal sm:px-2 sm:py-1 sm:text-[10px] sm:uppercase sm:tracking-wider"
+            style={{ backgroundColor: `${TEAL}14`, color: TEAL }}
+          >
+            <span className="sm:hidden">2hr</span>
+            <span className="hidden sm:inline">2 hr Session</span>
           </span>
 
-          <svg
-            className={`w-4 h-4 transition-transform duration-300 ease-in-out text-[#1f4b50] ${
-              isOpen ? "rotate-180" : "rotate-0"
-            }`}
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          {!hasAvailablePitch && (
+            <span
+              className="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-normal sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-wider"
+              style={{ backgroundColor: `${STOP}14`, color: STOP }}
+            >
+              Booked
+            </span>
+          )}
+
+          {hasAvailablePitch && (
+            <span className="relative flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#121e34]/15 transition-colors duration-200 group-hover:border-[#121e34]/30 group-hover:bg-[#121e34]/5 sm:h-7 sm:w-7">
+              <span className="absolute inset-0 m-auto h-[1.5px] w-2 rounded-full bg-[#121e34] sm:w-2.5" />
+              <span
+                className={`absolute inset-0 m-auto h-[1.5px] w-2 rounded-full bg-[#121e34] transition-transform duration-300 sm:w-2.5 ${
+                  isOpen ? "rotate-90 scale-x-0" : "rotate-90 scale-x-100"
+                }`}
+              />
+            </span>
+          )}
         </div>
       </header>
 
       <div
         className={`grid transition-all duration-300 ease-in-out ${
-          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+          shouldShowContent
+            ? "grid-rows-[1fr] opacity-100"
+            : "grid-rows-[0fr] opacity-0"
         }`}
       >
-        <div className="overflow-hidden bg-[#F8F5F2]/50">
-          <div className="p-2 flex flex-col gap-1.5">
+        <div className="overflow-hidden bg-[#F8F5F2]/60">
+          <div className="flex flex-col gap-1.5 p-2 sm:gap-2 sm:p-2.5">
             {displayItems.map(({ id, pitch, status }) => {
               const isAvailable = !status;
               const isPending = status === "Pending";
-              const isBooked = status === "Confirmed" || status === "Booked";
+              const isBooked = !isAvailable && !isPending;
 
               const rowBg = isPending
-                ? "#fffbeb"
+                ? "#FFFBEA"
                 : isBooked
-                ? "#fef2f2"
-                : "#ffffff";
-
+                  ? "#F4F5F7"
+                  : "#FFFFFF";
               const rowBorder = isPending
-                ? "#fed107"
+                ? CAUTION
                 : isBooked
-                ? "#E10600"
-                : "#121e341a";
-
-              const priceColor = isBooked ? "#9ca3af" : "#121e34";
+                  ? "#D7DBE2"
+                  : "#121e3414";
+              const labelColor = isBooked ? "#9096A1" : INK;
+              const priceColor = isBooked ? "#A6ACB6" : INK;
+              const statusColor = isPending
+                ? "#B45309"
+                : isBooked
+                  ? "#6B7280"
+                  : GO;
+              const displayStatus = status || "Available";
 
               return (
                 <button
@@ -157,54 +179,66 @@ export default function SlotCard({
                     if (isAvailable) onPitchSelect(slot, pitch.type);
                   }}
                   disabled={!isAvailable}
-                  aria-label={`Book ${pitch.label} for ${slot.timeRange} — ${statusText(status)}`}
-                  className={`w-full flex items-center gap-2 px-2.5 py-2 sm:px-3 sm:py-2.5 rounded-md border text-left transition-all duration-200 ${
-                    isAvailable
-                      ? "cursor-pointer hover:shadow-sm hover:-translate-y-[1px] active:scale-[0.99]"
-                      : "cursor-not-allowed opacity-60"
+                  aria-label={`Book ${pitch.label} for ${slot.timeRange} — ${displayStatus}`}
+                  className={`group relative flex w-full items-center justify-between gap-1.5 overflow-hidden rounded-[10px] border py-2.5 pl-3 pr-2.5 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:gap-2 sm:py-3 sm:pl-4 sm:pr-3.5 ${
+                    isAvailable ? "cursor-pointer" : "cursor-not-allowed"
                   }`}
-                  style={{
-                    backgroundColor: rowBg,
-                    borderColor: rowBorder,
-                  }}
+                  style={{ backgroundColor: rowBg, borderColor: rowBorder }}
                 >
-                  <StatusDot status={status} />
-
-                  <div className="flex-1 min-w-0">
-                    <span className="font-semibold text-[11px] sm:text-xs text-[#121e34]">
-                      {pitch.label}
-                    </span>
-                  </div>
-
-                  <div className="text-right shrink-0">
-                    <p className="font-bold text-[11px] sm:text-xs" style={{ color: priceColor }}>
-                      {KSH(pitch.price)}
-                    </p>
-                    <p
-                      className="text-[9px] sm:text-[10px] font-semibold mt-0.5"
-                      style={{
-                        color: isPending ? "#fed107" : isBooked ? "#E10600" : "#88b03f",
-                      }}
-                    >
-                      {statusText(status)}
-                    </p>
-                  </div>
+                  <span
+                    aria-hidden="true"
+                    className={`absolute left-0 top-0 h-full w-[3px] origin-center scale-y-0 bg-[#1f4b50] transition-transform duration-200 ${
+                      isAvailable ? "group-hover:scale-y-100" : ""
+                    }`}
+                  />
 
                   {isAvailable && (
-                    <svg
-                      aria-hidden="true"
-                      className="shrink-0 w-3 h-3 sm:w-3.5 sm:h-3.5 ml-1 text-[#88b03f]"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M9 5l7 7-7 7"
-                      />
-                    </svg>
+                    <>
+                      <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+                        <span
+                          className="truncate text-[11px] font-bold sm:text-xs"
+                          style={{ color: labelColor }}
+                        >
+                          {pitch.label}
+                        </span>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                        <div className="flex flex-col items-end">
+                          <p
+                            className="text-[11px] font-bold tabular-nums sm:text-xs"
+                            style={{ color: priceColor }}
+                          >
+                            {KSH(pitch.price)}
+                          </p>
+                          <p
+                            className="mt-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]"
+                            style={{ color: statusColor }}
+                          >
+                            {displayStatus}
+                          </p>
+                        </div>
+                          <span
+                            aria-hidden="true"
+                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#88b03f]/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:border-[#88b03f] group-hover:bg-[#88b03f]/10 sm:h-7 sm:w-7"
+                          >
+                            <svg
+                              className="h-2.5 w-2.5 text-[#88b03f] sm:h-3.5 sm:w-3.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M9 5l7 7-7 7"
+                              />
+                            </svg>
+                          </span>
+                        
+                      </div>
+                    </>
                   )}
                 </button>
               );

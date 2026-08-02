@@ -116,7 +116,7 @@ export default function PitchBooking({
       }
     },
     onError: (err: Error) => {
-      toast.error(`Booking failed: ${err.message}`);
+      toast.error(`${err}`);
     },
   });
 

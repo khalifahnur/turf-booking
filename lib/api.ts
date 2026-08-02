@@ -20,8 +20,16 @@ export const initiateBooking = async (bookingData: any) => {
   });
   
   if (!res.ok) {
-    const errorData = await res.json().catch(() => ({}));
-    throw new Error(errorData.message || "Payment initiation failed");
+    const errorText = await res.text();
+    let errorMessage = "Payment initiation failed";
+    try {
+      const errorJson = JSON.parse(errorText);
+      errorMessage = errorJson.message || errorText;
+    } catch (e) {
+      errorMessage = errorText.trim() || errorMessage; 
+    }
+
+    throw new Error(errorMessage);
   }
   
   return res.json();

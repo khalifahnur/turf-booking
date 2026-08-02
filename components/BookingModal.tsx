@@ -3,7 +3,7 @@
 import { BRAND, PITCH_OPTIONS } from "@/lib/booking";
 import { BookingFormData, DayInfo, PitchType, TimeSlot } from "@/lib/types";
 import React, { useEffect, useState } from "react";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Field } from "./Field";
 import SlotCard from "./SlotCard";
 import { ChevronLeft } from "lucide-react";
@@ -111,7 +111,7 @@ export default function BookingSheet({
         >
           Select a Time
         </h3>
-        <p className="text-xs mt-1.5 font-medium opacity-80 text-[#1f4b50]">
+        <p className="text-sm mt-1.5 font-medium opacity-80 text-[#1f4b50]">
           {selectedDate.dateObj.toLocaleDateString("en-US", {
             weekday: "long",
             month: "long",
@@ -253,10 +253,16 @@ export default function BookingSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && !isBusy && onClose()}>
+      
       <SheetContent
+      data-sidebar="sidebar"
+            data-mobile="true"
+            
+            
         side={isMobile ? "bottom" : "right"}
-        className={`w-full p-0 border-[#121e34]/10 flex flex-col [&>button]:hidden backdrop-blur-xl transition-transform duration-500 bg-white shadow-2xl ${isMobile ? "h-[85vh] rounded-t-3xl border-t" : "sm:max-w-md border-l"}`}
+        className={`w-full p-0 border-[#121e34]/10 flex flex-col [&>button]:hidden backdrop-blur-xl transition-transform duration-500 bg-white shadow-2xl ${isMobile ? "h-[50vh] rounded-t-3xl border-t" : "sm:max-w-md border-l"}`}
       >
+        <SheetTitle></SheetTitle>
         {selectedSlot ? renderBookingForm() : renderSlotList()}
       </SheetContent>
     </Sheet>

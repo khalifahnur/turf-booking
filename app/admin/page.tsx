@@ -142,7 +142,7 @@ function LoginScreen({
 }) {
   return (
     <div
-      className="min-h-screen flex items-center justify-center p-6 bg-[#121e34]"
+      className="min-h-screen flex items-center justify-center p-6 bg-[#F8F5F2]"
       style={{ fontFamily: font }}
     >
       <style>{`
@@ -161,7 +161,7 @@ function LoginScreen({
         <Link href="/" className="shrink-0 group block mb-8">
           <div className="relative flex items-center justify-center w-24 sm:w-32 md:w-40 lg:w-48 transition-transform duration-300 group-hover:scale-105">
             <Image
-              src="/assets/icon.png"
+              src="/assets/logo.png"
               alt="K-Arena Logo"
               width={1000}
               height={800}
@@ -365,7 +365,7 @@ export default function AdminDashboard() {
           <Link href="/" className="shrink-0 group block">
             <div className="relative flex items-center justify-center w-24 sm:w-28 transition-transform duration-300 group-hover:scale-105">
               <Image
-                src="/assets/icon.png"
+                src="/assets/logo.png"
                 alt="K-Arena Logo"
                 width={500}
                 height={200}
