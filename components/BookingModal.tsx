@@ -62,11 +62,16 @@ export default function BookingSheet({
   onCancelWait,
 }: BookingSheetProps) {
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isMobile, setIsMobile] = useState(false);
+  
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
-    check();
     window.addEventListener("resize", check);
     return () => window.removeEventListener("resize", check);
   }, []);
@@ -253,16 +258,13 @@ export default function BookingSheet({
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && !isBusy && onClose()}>
-      
       <SheetContent
-      data-sidebar="sidebar"
-            data-mobile="true"
-            
-            
         side={isMobile ? "bottom" : "right"}
-        className={`w-full p-0 border-[#121e34]/10 flex flex-col [&>button]:hidden backdrop-blur-xl transition-transform duration-500 bg-white shadow-2xl ${isMobile ? "h-[50vh] rounded-t-3xl border-t" : "sm:max-w-md border-l"}`}
+        className={`w-full p-0 flex flex-col [&>button]:hidden backdrop-blur-xl bg-white shadow-2xl border-[#121e34]/10 ${
+          isMobile ? "h-[85vh] rounded-t-3xl border-t" : "sm:max-w-md border-l"
+        }`}
       >
-        <SheetTitle></SheetTitle>
+        <SheetTitle className="hidden"></SheetTitle>
         {selectedSlot ? renderBookingForm() : renderSlotList()}
       </SheetContent>
     </Sheet>
