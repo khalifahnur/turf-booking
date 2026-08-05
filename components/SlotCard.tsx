@@ -33,7 +33,7 @@ export default function SlotCard({
 
   const safeStatuses = Array.isArray(slotStatuses) ? slotStatuses : [];
 
-  const record5Aside = safeStatuses.find(
+  const records5Aside = safeStatuses.filter(
     (item) =>
       item.time === slot.timeRange &&
       item.pitchType === "5Aside" &&
@@ -47,7 +47,6 @@ export default function SlotCard({
       item.date === selectedDateStr,
   );
 
-  const status5Aside = record5Aside?.status;
   const status8Aside = record8Aside?.status;
 
   const pitch5 = PITCH_OPTIONS.find((p) => p.type === "5Aside");
@@ -62,13 +61,22 @@ export default function SlotCard({
         pitch: pitch8,
         status: status8Aside,
       });
-    } else if (status5Aside) {
+    } else if (records5Aside.length > 0) {
       displayItems.push({
         id: "5aside-1",
         pitch: pitch5,
-        status: status5Aside,
+        status: records5Aside[0].status,
       });
-      displayItems.push({ id: "5aside-2", pitch: pitch5, status: undefined });
+
+      if (records5Aside.length > 1) {
+        displayItems.push({
+          id: "5aside-2",
+          pitch: pitch5,
+          status: records5Aside[1].status,
+        });
+      } else {
+        displayItems.push({ id: "5aside-2", pitch: pitch5, status: undefined });
+      }
     } else {
       displayItems.push({ id: "5aside-1", pitch: pitch5, status: undefined });
       displayItems.push({ id: "8aside-1", pitch: pitch8, status: undefined });
@@ -77,7 +85,7 @@ export default function SlotCard({
 
   const hasAvailablePitch = displayItems.some((item) => !item.status);
 
-  const shouldShowContent = isOpen || !hasAvailablePitch ;
+  const shouldShowContent = isOpen || !hasAvailablePitch;
 
   return (
     <article
@@ -192,54 +200,54 @@ export default function SlotCard({
                     }`}
                   />
 
-                  {isAvailable && (
-                    <>
-                      <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
-                        <span
-                          className="truncate text-[11px] font-bold sm:text-xs"
-                          style={{ color: labelColor }}
-                        >
-                          {pitch.label}
-                        </span>
-                      </div>
+                  {/* 2. THE FIX: Removed the `{isAvailable &&}` wrapper so the text ALWAYS renders */}
+                  <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
+                    <span
+                      className="truncate text-[11px] font-bold sm:text-xs"
+                      style={{ color: labelColor }}
+                    >
+                      {pitch.label}
+                    </span>
+                  </div>
 
-                      <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                        <div className="flex flex-col items-end">
-                          <p
-                            className="text-[11px] font-bold tabular-nums sm:text-xs"
-                            style={{ color: priceColor }}
-                          >
-                            {KSH(pitch.price)}
-                          </p>
-                          <p
-                            className="mt-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]"
-                            style={{ color: statusColor }}
-                          >
-                            {displayStatus}
-                          </p>
-                        </div>
-                          <span
-                            aria-hidden="true"
-                            className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#88b03f]/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:border-[#88b03f] group-hover:bg-[#88b03f]/10 sm:h-7 sm:w-7"
-                          >
-                            <svg
-                              className="h-2.5 w-2.5 text-[#88b03f] sm:h-3.5 sm:w-3.5"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M9 5l7 7-7 7"
-                              />
-                            </svg>
-                          </span>
-                        
-                      </div>
-                    </>
-                  )}
+                  <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                    <div className="flex flex-col items-end">
+                      <p
+                        className="text-[11px] font-bold tabular-nums sm:text-xs"
+                        style={{ color: priceColor }}
+                      >
+                        {KSH(pitch.price)}
+                      </p>
+                      <p
+                        className="mt-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]"
+                        style={{ color: statusColor }}
+                      >
+                        {displayStatus}
+                      </p>
+                    </div>
+
+                    {/* Only hide the arrow icon if the slot is booked */}
+                    {isAvailable && (
+                      <span
+                        aria-hidden="true"
+                        className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#88b03f]/35 transition-all duration-200 group-hover:translate-x-0.5 group-hover:border-[#88b03f] group-hover:bg-[#88b03f]/10 sm:h-7 sm:w-7"
+                      >
+                        <svg
+                          className="h-2.5 w-2.5 text-[#88b03f] sm:h-3.5 sm:w-3.5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </span>
+                    )}
+                  </div>
                 </button>
               );
             })}

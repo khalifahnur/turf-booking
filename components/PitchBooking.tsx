@@ -48,7 +48,6 @@ export default function PitchBooking({
   footer,
 }: PitchBookingSlots = {}) {
   const queryClient = useQueryClient();
-  const { font } = BRAND;
 
   const [availableDays] = useState<DayInfo[]>(buildAvailableDays);
   const [selectedDate, setSelectedDate] = useState<DayInfo | null>(
@@ -105,8 +104,7 @@ export default function PitchBooking({
     mutationFn: initiateBooking,
     onSuccess: (data) => {
       if (data && data.reference) {
-        setTxReference(data.reference);
-        
+        setTxReference(data.reference);   
         toast.loading("Check your phone and enter M-Pesa PIN", {
           id: "payment-toast",
         });
