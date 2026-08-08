@@ -1,6 +1,6 @@
 "use client";
 
-import { BRAND, PITCH_OPTIONS } from "@/lib/booking";
+import {  PITCH_OPTIONS } from "@/lib/booking";
 import { BookingFormData, DayInfo, PitchType, TimeSlot } from "@/lib/types";
 import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";

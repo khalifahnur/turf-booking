@@ -60,6 +60,7 @@ export interface PitchOption {
 export interface BookingFormData {
   userName: string;
   teamName: string;
+  //email:string;
   phoneNumber: string;
 }
 
