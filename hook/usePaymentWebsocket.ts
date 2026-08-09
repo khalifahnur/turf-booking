@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 export const usePaymentWebSocket = (reference: string | null) => {
   const [status, setStatus] = useState<PaymentStatus>("Idle");
   const ws = useRef<WebSocket | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (!reference) return;
@@ -11,14 +12,17 @@ export const usePaymentWebSocket = (reference: string | null) => {
     setStatus("Connecting");
 
     const wsUrl = process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:3002";
-
-    ws.current = new WebSocket(
-      `${wsUrl}/ws/v1/payment-status?reference=${reference}`,
-    );
+    ws.current = new WebSocket(`${wsUrl}/ws/v1/payment-status?reference=${reference}`);
 
     ws.current.onopen = () => {
-      //   console.log('WebSocket Connected');
       setStatus("Pending");
+
+      timeoutRef.current = setTimeout(() => {
+        setStatus("Failed");
+        if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+          ws.current.close();
+        }
+      }, 120000);
     };
 
     ws.current.onmessage = (event) => {
@@ -27,9 +31,11 @@ export const usePaymentWebSocket = (reference: string | null) => {
         console.log('Received WebSocket Message:', data);
 
         if (data.status === "Completed") {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
           setStatus("Completed");
           ws.current?.close();
         } else if (data.status === "Failed") {
+          if (timeoutRef.current) clearTimeout(timeoutRef.current); 
           setStatus("Failed");
           ws.current?.close();
         }
@@ -40,14 +46,17 @@ export const usePaymentWebSocket = (reference: string | null) => {
 
     ws.current.onerror = (error) => {
       console.error("WebSocket Error:", error);
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       setStatus("Failed");
     };
 
     ws.current.onclose = () => {
       console.log("WebSocket Disconnected");
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
 
     return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (ws.current && ws.current.readyState === WebSocket.OPEN) {
         ws.current.close();
       }
