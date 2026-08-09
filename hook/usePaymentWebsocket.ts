@@ -24,7 +24,7 @@ export const usePaymentWebSocket = (reference: string | null) => {
     ws.current.onmessage = (event) => {
       try {
         const data: PaymentWSMessage = JSON.parse(event.data);
-        // console.log('Received WebSocket Message:', data);
+        console.log('Received WebSocket Message:', data);
 
         if (data.status === "Completed") {
           setStatus("Completed");
