@@ -89,7 +89,7 @@ export default function BookingSheet({
     const newErrors: Record<string, string> = {};
 
     if (!formData.userName.trim()) newErrors.userName = "Representative name is required";
-    if (!formData.teamName.trim()) newErrors.teamName = "Team name is required";
+    if (!formData.email.trim()) newErrors.teamName = "Email is required";
 
     const phoneRegex = /^[17]\d{8}$/;
     if (!formData.phoneNumber) {
@@ -195,11 +195,19 @@ export default function BookingSheet({
               disabled={isBusy}
               error={errors.userName}
             />
-            <Field
+            {/* <Field
               label="Team Name"
               value={formData.teamName}
               onChange={(v) => onFormChange({ ...formData, teamName: v })}
               placeholder="e.g. FC Spartans"
+              disabled={isBusy}
+              error={errors.teamName}
+            /> */}
+            <Field
+              label="Email"
+              value={formData.email}
+              onChange={(v) => onFormChange({ ...formData, email: v })}
+              placeholder="abc@gmail.com"
               disabled={isBusy}
               error={errors.teamName}
             />

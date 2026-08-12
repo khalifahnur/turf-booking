@@ -59,7 +59,7 @@ export default function PitchBooking({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<BookingFormData>({
     userName: "",
-    teamName: "",
+    email: "",
     phoneNumber: "",
   });
 
@@ -132,7 +132,7 @@ export default function PitchBooking({
   const handlePitchSelect = (slot: TimeSlot, pitchType: PitchType) => {
     setSelectedSlot(slot);
     setSelectedPitchType(pitchType);
-    setFormData({ userName: "", teamName: "", phoneNumber: "" });
+    setFormData({ userName: "", email: "", phoneNumber: "" });
   };
 
   const handleBookingSubmit = (e: React.FormEvent) => {
