@@ -109,21 +109,45 @@ export default function BookingSheet({
 
   const renderSlotList = () => (
     <>
-      <div className="px-6 pt-8 pb-5 shrink-0 relative overflow-hidden border-b border-[#121e34]/10">
-        <h3
-          id="modal-title"
-          className="text-2xl font-playfair font-semibold leading-tight tracking-tight text-[#121e34]"
-        >
-          Select a Time
-        </h3>
-        <p className="text-sm mt-1.5 font-medium opacity-80 text-[#1f4b50]">
-          {selectedDate.dateObj.toLocaleDateString("en-US", {
-            weekday: "long",
-            month: "long",
-            day: "numeric",
-          })}
-        </p>
-      </div>
+      <div className="flex justify-between items-start px-6 pt-8 pb-5 shrink-0 relative overflow-hidden border-b border-[#121e34]/10">
+  <div>
+    <h3
+      id="modal-title"
+      className="text-2xl font-playfair font-semibold leading-tight tracking-tight text-[#121e34]"
+    >
+      Select a Time
+    </h3>
+    <p className="text-sm mt-1.5 font-medium opacity-80 text-[#1f4b50]">
+      {selectedDate.dateObj.toLocaleDateString("en-US", {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+      })}
+    </p>
+  </div>
+
+  <button
+    type="button"
+    onClick={onClose}
+    aria-label="Close"
+    className="p-2 -mr-2 transition-all rounded-full active:scale-[0.98] text-[#1f4b50] hover:bg-[#F8F5F2]"
+  >
+    <svg 
+      xmlns="http://www.w3.org/2000/svg" 
+      width="24" 
+      height="24" 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+    >
+      <path d="M18 6 6 18" />
+      <path d="m6 6 12 12" />
+    </svg>
+  </button>
+</div>
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ scrollbarWidth: "none" }}>
         {currentSlots.length > 0 ? (
           currentSlots.map((slot) => (
@@ -186,7 +210,9 @@ export default function BookingSheet({
         </div>
 
         <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
-          <form onSubmit={handleLocalSubmit} className="px-6 py-6 space-y-3">
+          <form 
+          //onSubmit={handleLocalSubmit} 
+          className="px-6 py-6 space-y-3">
             <Field
               label="Representative Name"
               value={formData.userName}
@@ -267,10 +293,8 @@ export default function BookingSheet({
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && !isBusy && onClose()}>
       <SheetContent
-        side={isMobile ? "bottom" : "right"}
-        className={`w-full p-0 flex flex-col [&>button]:hidden backdrop-blur-xl bg-white shadow-2xl border-[#121e34]/10 ${
-          isMobile ? "h-[85vh] rounded-t-3xl border-t" : "sm:max-w-md border-l"
-        }`}
+        side={"right"}
+        className="w-full p-0 flex flex-col [&>button]:hidden backdrop-blur-xl bg-white shadow-2xl border-[#121e34]/10"
       >
         <SheetTitle className="hidden"></SheetTitle>
         {selectedSlot ? renderBookingForm() : renderSlotList()}

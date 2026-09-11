@@ -36,14 +36,14 @@ export const PITCH_OPTIONS: PitchOption[] = [
   {
     type:       "5Aside",
     label:      "5-Aside",
-    price:      6_500,
+    price:      7_000,
     maxPlayers: 10,
     pitchSize:  "Half Pitch",
   },
   {
     type:       "8Aside",
     label:      "8-Aside",
-    price:      12_000,
+    price:      13_000,
     maxPlayers: 16,
     pitchSize:  "Full Field",
   },

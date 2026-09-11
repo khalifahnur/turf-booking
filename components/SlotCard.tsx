@@ -200,7 +200,6 @@ export default function SlotCard({
                     }`}
                   />
 
-                  {/* 2. THE FIX: Removed the `{isAvailable &&}` wrapper so the text ALWAYS renders */}
                   <div className="flex min-w-0 items-center gap-2 sm:gap-2.5">
                     <span
                       className="truncate text-[11px] font-bold sm:text-xs"
@@ -226,7 +225,6 @@ export default function SlotCard({
                       </p>
                     </div>
 
-                    {/* Only hide the arrow icon if the slot is booked */}
                     {isAvailable && (
                       <span
                         aria-hidden="true"

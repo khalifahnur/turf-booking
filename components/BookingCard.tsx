@@ -1,7 +1,7 @@
 "use client";
 
 import type { DayInfo } from "@/lib/types";
-import { CalendarIcon, ChevronLeft, ChevronRight, ArrowRight } from "lucide-react";
+import {  ChevronLeft, ChevronRight } from "lucide-react";
 import React, { useMemo } from "react";
 
 interface BookingCardProps {
@@ -10,6 +10,7 @@ interface BookingCardProps {
   onDaySelect: (day: DayInfo) => void;
   monthLabel: string;
   onOpenSlots: () => void;
+  isHighlighting?: boolean; 
 }
 
 export default function BookingCard({
@@ -18,6 +19,7 @@ export default function BookingCard({
   onDaySelect,
   monthLabel,
   onOpenSlots,
+  isHighlighting = false, 
 }: BookingCardProps) {
   const calendarCells = useMemo(() => {
     if (availableDays.length === 0) return [];
@@ -30,7 +32,14 @@ export default function BookingCard({
   const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"];
 
   return (
-    <div className="relative mt-4 lg:mt-0 w-full">
+    <div 
+      id="booking-calendar"
+      className={`relative mt-4 lg:mt-0 w-full transition-all duration-500 scroll-mt-24 ${
+        isHighlighting 
+          ? "ring-4 ring-[#88b03f]/50 ring-offset-4 scale-[1.02] z-10" 
+          : "ring-0 scale-100 z-0"
+      }`} 
+    >
       <div className="bg-[#f8f5f2] rounded-[24px] lg:rounded-[28px] p-5 lg:p-6 pt-10 lg:pt-6 shadow-[0_15px_40px_rgba(18,30,52,0.15)] flex flex-col sm:flex-row gap-5 relative z-0">
         
         <div className="flex flex-col justify-between sm:w-[45%] lg:ml-7 mt-1 lg:mt-2">
