@@ -211,7 +211,7 @@ export default function BookingSheet({
 
         <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
           <form 
-          //onSubmit={handleLocalSubmit} 
+          onSubmit={handleLocalSubmit} 
           className="px-6 py-6 space-y-3">
             <Field
               label="Representative Name"

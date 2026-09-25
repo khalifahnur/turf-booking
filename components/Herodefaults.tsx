@@ -5,9 +5,9 @@ import { useState } from "react";
 export function DefaultHeroTitle() {
   return (
     <>
-      <h1 className="font-playfair text-[#F8F5F2] leading-[1.05] text-[3rem] sm:text-[3.5rem] lg:text-[3.8rem] xl:text-[4.2rem] tracking-tight">
-        Your pitch. <br />
-        Your people. <span className="font-vibes text-[#88b03f] text-[3.5rem] sm:text-[4.2rem] lg:text-[4.8rem] xl:text-[5.2rem] font-normal leading-[0.3] relative top-1 ml-1">Your game</span>
+      <h1 className="font-playfair text-[#F8F5F2] leading-[1.05] text-[2rem] sm:text-[2rem] lg:text-[2.5rem] xl:text-[3rem] tracking-tight">
+        Your pitch. Your people.<br />
+         <span className="font-vibes text-[#88b03f] text-[3.5rem] sm:text-[4.2rem] lg:text-[4.8rem] xl:text-[5.2rem] font-normal leading-[0.3] relative top-1 ml-5">Your game</span>
       </h1>
     </>
   );
@@ -15,7 +15,7 @@ export function DefaultHeroTitle() {
 
 export function DefaultHeroSubtitle() {
   return (
-    <p className="text-white/80 text-sm md:text-[15px] leading-relaxed max-w-[380px] font-medium">
+    <p className="text-white/80 text-sm md:text-[15px] leading-relaxed max-w-[380px] font-medium mt-5">
       Bring your five-a-side crew, rally your workmates, or get the team together for training. Book your slot at K-Arena and let the football begin.
     </p>
   );

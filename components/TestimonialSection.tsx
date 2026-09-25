@@ -45,9 +45,6 @@ export default function TestimonialsSection() {
       <div className="max-w-[1440px] mx-auto px-6 sm:px-8 lg:px-12 xl:px-16">
         <div className="flex items-end justify-between mb-12 sm:mb-14">
           <div>
-            <span className="inline-block text-xs font-bold uppercase tracking-[0.18em] text-gray-400 border border-gray-200 rounded-full px-3.5 py-1 mb-5">
-              Testimonials
-            </span>
             <h2
               className="font-playfair font-semibold text-gray-900 leading-tight"
               style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)" }}
