@@ -38,7 +38,7 @@ export default function Navbar({ brandLogo }: NavbarProps) {
 
         <div className="flex items-center gap-2 sm:gap-3">
           <a
-            href="https://maps.app.goo.gl/uBNLHePXgTiTciC5A"
+            href="https://maps.app.goo.gl/XjfyKBvQyhBifDBCA?g_st=ac"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 px-4 py-2.5 bg-white/60 hover:bg-white 
