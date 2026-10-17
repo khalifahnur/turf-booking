@@ -1,13 +1,9 @@
-import { BRAND, KSH, PITCH_OPTIONS } from "@/lib/booking";
-import { PitchType, TimeSlot } from "@/lib/types";
-import React, { useState } from "react";
+import { BRAND, KSH, PITCH_OPTIONS, priceFor, SESSION_LENGTHS } from "@/lib/booking";
+import { slotAvailability } from "@/lib/availability";
+import type { BookingRecord, PitchType, TimeSlot } from "@/lib/types";
+import React, { useMemo, useState } from "react";
 
-export interface BookingRecord {
-  date: string;
-  pitchType: string;
-  status: string;
-  time: string;
-}
+export type { BookingRecord };
 
 const INK = "#121e34";
 const TEAL = "#1f4b50";
@@ -31,59 +27,33 @@ export default function SlotCard({
   const [isOpen, setIsOpen] = useState(false);
   const { font } = BRAND;
 
-  const safeStatuses = Array.isArray(slotStatuses) ? slotStatuses : [];
-
-  const records5Aside = safeStatuses.filter(
-    (item) =>
-      item.time === slot.timeRange &&
-      item.pitchType === "5Aside" &&
-      item.date === selectedDateStr,
+  // A 1 hour booking blocks the 2 hour slot around it (and vice versa), so
+  // availability is worked out from overlapping time, not from matching labels.
+  const availability = useMemo(
+    () =>
+      slotAvailability(
+        slot,
+        selectedDateStr,
+        Array.isArray(slotStatuses) ? slotStatuses : [],
+      ),
+    [slot, selectedDateStr, slotStatuses],
   );
 
-  const record8Aside = safeStatuses.find(
-    (item) =>
-      item.time === slot.timeRange &&
-      item.pitchType === "8Aside" &&
-      item.date === selectedDateStr,
-  );
+  const length = SESSION_LENGTHS.find((l) => l.minutes === slot.minutes);
 
-  const status8Aside = record8Aside?.status;
-
-  const pitch5 = PITCH_OPTIONS.find((p) => p.type === "5Aside");
-  const pitch8 = PITCH_OPTIONS.find((p) => p.type === "8Aside");
-
-  const displayItems = [];
-
-  if (pitch5 && pitch8) {
-    if (status8Aside) {
-      displayItems.push({
-        id: "8aside-1",
-        pitch: pitch8,
-        status: status8Aside,
-      });
-    } else if (records5Aside.length > 0) {
-      displayItems.push({
-        id: "5aside-1",
-        pitch: pitch5,
-        status: records5Aside[0].status,
-      });
-
-      if (records5Aside.length > 1) {
-        displayItems.push({
-          id: "5aside-2",
-          pitch: pitch5,
-          status: records5Aside[1].status,
-        });
-      } else {
-        displayItems.push({ id: "5aside-2", pitch: pitch5, status: undefined });
-      }
-    } else {
-      displayItems.push({ id: "5aside-1", pitch: pitch5, status: undefined });
-      displayItems.push({ id: "8aside-1", pitch: pitch8, status: undefined });
-    }
-  }
+  const displayItems = PITCH_OPTIONS.map((pitch) => {
+    const state = availability[pitch.type];
+    return {
+      id: pitch.type,
+      pitch,
+      status: state === "Available" ? undefined : state,
+      lastHalf: pitch.type === "5Aside" && state === "Available" && availability.halvesLeft === 1,
+    };
+  });
 
   const hasAvailablePitch = displayItems.some((item) => !item.status);
+  // Nothing free, but only because of unpaid holds that may still lapse.
+  const onlyHeld = !hasAvailablePitch && displayItems.every((item) => item.status === "Pending");
 
   const shouldShowContent = isOpen || !hasAvailablePitch;
 
@@ -120,16 +90,20 @@ export default function SlotCard({
             className="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold normal-case tracking-normal sm:px-2 sm:py-1 sm:text-[10px] sm:uppercase sm:tracking-wider"
             style={{ backgroundColor: `${TEAL}14`, color: TEAL }}
           >
-            <span className="sm:hidden">2hr</span>
-            <span className="hidden sm:inline">2 hr Session</span>
+            <span className="sm:hidden">{length?.short.replace(" ", "")}</span>
+            <span className="hidden sm:inline">{length?.long}</span>
           </span>
 
           {!hasAvailablePitch && (
             <span
               className="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-normal sm:px-2 sm:py-1 sm:text-[10px] sm:tracking-wider"
-              style={{ backgroundColor: `${STOP}14`, color: STOP }}
+              style={
+                onlyHeld
+                  ? { backgroundColor: `${CAUTION}33`, color: "#B45309" }
+                  : { backgroundColor: `${STOP}14`, color: STOP }
+              }
             >
-              Booked
+              {onlyHeld ? "Pending" : "Booked"}
             </span>
           )}
 
@@ -155,7 +129,7 @@ export default function SlotCard({
       >
         <div className="overflow-hidden bg-[#F8F5F2]/60">
           <div className="flex flex-col gap-1.5 p-2 sm:gap-2 sm:p-2.5">
-            {displayItems.map(({ id, pitch, status }) => {
+            {displayItems.map(({ id, pitch, status, lastHalf }) => {
               const isAvailable = !status;
               const isPending = status === "Pending";
               const isBooked = !isAvailable && !isPending;
@@ -207,6 +181,14 @@ export default function SlotCard({
                     >
                       {pitch.label}
                     </span>
+                    {lastHalf && (
+                      <span
+                        className="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider sm:text-[9px]"
+                        style={{ backgroundColor: `${CAUTION}33`, color: "#B45309" }}
+                      >
+                        Last half
+                      </span>
+                    )}
                   </div>
 
                   <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -215,7 +197,7 @@ export default function SlotCard({
                         className="text-[11px] font-bold tabular-nums sm:text-xs"
                         style={{ color: priceColor }}
                       >
-                        {KSH(pitch.price)}
+                        {KSH(priceFor(pitch.type, slot.minutes))}
                       </p>
                       <p
                         className="mt-0.5 text-[9px] font-bold uppercase tracking-wider sm:text-[10px]"

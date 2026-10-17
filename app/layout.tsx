@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Playfair_Display, Great_Vibes, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import Providers from "./provider";
 import { Toaster } from "react-hot-toast";
 import AuthProvider from "@/components/AuthProvider";
+import { ORG_NAME, SITE_NAME, SITE_URL } from "@/lib/site";
 
 const playfair = Playfair_Display({
   variable: "--font-playfair",
@@ -21,49 +22,55 @@ const sans = Plus_Jakarta_Sans({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "Book 5-a-side and 8-a-side football pitches in Nairobi at K-Arena, off Ngong Road. Pick a 1 or 2 hour session and pay instantly with M-Pesa.";
+
+export const viewport: Viewport = {
+  themeColor: "#1f4b50",
+};
+
 export const metadata: Metadata = {
-  metadataBase: new URL("https://www.yourdomain.com"), 
+  metadataBase: new URL(SITE_URL),
 
   title: {
-    default: "K-Arena | Premium Pitch Booking",
-    template: "%s | St. Sebastian Sports Academy",
+    default: "K-Arena | 5-a-side & 8-a-side Football Pitch Booking in Nairobi",
+    template: `%s | ${SITE_NAME}`,
   },
-  description: "Book premium 5-a-side and 8-a-side football pitches at K-Arena. Located off Ngong Road, Nairobi. Secure your session instantly.",
+  description: DESCRIPTION,
+  applicationName: SITE_NAME,
   keywords: [
-    "football pitch booking",
+    "football pitch booking Nairobi",
     "5 aside football Nairobi",
-    "8 aside football",
-    "St. Sebastian Sports Academy",
-    "Ngong road sports",
-    "turf booking",
-    "k-arena "
+    "8 aside football Nairobi",
+    "book a turf Nairobi",
+    "astro turf Ngong Road",
+    "football pitch hire Kenya",
+    "K-Arena",
+    ORG_NAME,
   ],
-  authors: [{ name: "K-Arena " }],
-  creator: "St. Sebastian Sports Academy",
-  publisher: "St. Sebastian Sports Academy",
-  
+  authors: [{ name: SITE_NAME }],
+  creator: ORG_NAME,
+  publisher: ORG_NAME,
+  category: "sports",
+
+  // Canonical URL and og:url are deliberately NOT set here: every page would
+  // inherit them and claim to be the homepage. Pages set their own through
+  // pageMetadata() in lib/seo.ts.
+  //
+  // The preview image comes from app/opengraph-image.tsx and
+  // app/twitter-image.tsx, which Next.js attaches automatically.
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://www.yourdomain.com",
-    title: "K-Arena | Pitch Booking",
-    description: "Book premium 5-a-side and 8-a-side football pitches instantly via M-Pesa.",
-    siteName: "K-Arena ",
-    images: [
-      {
-        url: "/og-image.jpg", 
-        width: 1200,
-        height: 630,
-        alt: "K-Arena Football Pitch",
-      },
-    ],
+    title: "K-Arena | Football Pitch Booking in Nairobi",
+    description: DESCRIPTION,
+    siteName: SITE_NAME,
   },
 
   twitter: {
     card: "summary_large_image",
-    title: "K-Arena | Premium Pitch Booking",
-    description: "Book premium 5-a-side and 8-a-side football pitches instantly via M-Pesa.",
-    images: ["/og-image.jpg"], 
+    title: "K-Arena | Football Pitch Booking in Nairobi",
+    description: DESCRIPTION,
   },
 
   robots: {
@@ -85,7 +92,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en-KE">
       <body
         className={`${sans.variable} ${playfair.variable} ${vibes.variable} font-sans antialiased`}
       >

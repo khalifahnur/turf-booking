@@ -1,13 +1,14 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
 import { fetchBookings, initiateBooking } from "@/lib/api";
-import type { BookingFormData, DayInfo, PitchType, TimeSlot } from "@/lib/types";
-import { BRAND, slotKey, WEEKDAY_SLOTS, WEEKEND_SLOTS } from "@/lib/booking";
+import type { BookingFormData, DayInfo, PitchType, SessionLength, TimeSlot } from "@/lib/types";
+import { DEFAULT_SESSION_LENGTH, getSlots } from "@/lib/booking";
 import { PitchBookingSlots } from "@/lib/slots";
+import { useFooterReveal } from "@/hook/useFooterReveal";
 import HeroSection from "./HeroSection";
 import Navbar from "./Navbar";
 import TestimonialsSection from "./TestimonialSection";
@@ -56,6 +57,7 @@ export default function PitchBooking({
 
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
   const [selectedPitchType, setSelectedPitchType] = useState<PitchType | null>(null);
+  const [duration, setDuration] = useState<SessionLength>(DEFAULT_SESSION_LENGTH);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState<BookingFormData>({
     userName: "",
@@ -63,7 +65,9 @@ export default function PitchBooking({
     phoneNumber: "",
   });
 
-  const [waitingSlotKey, setWaitingSlotKey] = useState<string | null>(null);
+  const footerLayerRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const { canReveal } = useFooterReveal(pageRef, footerLayerRef);
 
   const { data: slotStatuses = [] } = useQuery({
     queryKey: ["bookings"],
@@ -119,8 +123,8 @@ export default function PitchBooking({
   });
 
   const currentSlots = useMemo(
-    () => (selectedDate?.isWeekend ? WEEKEND_SLOTS : WEEKDAY_SLOTS),
-    [selectedDate]
+    () => getSlots(!!selectedDate?.isWeekend, duration),
+    [selectedDate, duration]
   );
 
   const monthLabel =
@@ -148,19 +152,34 @@ export default function PitchBooking({
   };
 
   const handleCancelWait = () => {
-    setWaitingSlotKey(null);
+    setTxReference(null);
     setIsModalOpen(false);
     toast.dismiss("payment-toast");
   };
 
   return (
-    <div className="relative text-[#2c2825] bg-[#1f4b50]">
-      <div className="fixed bottom-0 left-0 w-full z-0 h-[100svh] overflow-hidden pointer-events-none">
-        <div className="pointer-events-auto h-full w-full">
+    <div className="relative flex flex-col text-[#2c2825] bg-[#1f4b50]">
+      {/* The footer is fixed underneath the page and uncovered as the page lifts
+          away. When its content is taller than the screen that would clip it, so
+          it falls back to sitting after the page like a normal footer. */}
+      <div
+        ref={footerLayerRef}
+        className={
+          canReveal
+            ? "fixed bottom-0 left-0 w-full z-0 h-[100svh] overflow-hidden pointer-events-none"
+            : "relative order-2 z-0 w-full"
+        }
+      >
+        <div className={canReveal ? "pointer-events-auto h-full w-full" : "w-full"}>
           {footer ?? <FooterSection />}
         </div>
       </div>
-      <div className="relative z-10 bg-[#f8f5f2] rounded-b-[40px] lg:rounded-b-[60px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden mb-[100svh]">
+      <div
+        ref={pageRef}
+        className={`relative z-10 bg-[#f8f5f2] rounded-b-[40px] lg:rounded-b-[60px] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.8)] overflow-hidden ${
+          canReveal ? "mb-[100svh]" : "order-1"
+        }`}
+      >
         <HeroSection
           navbar={<Navbar brandLogo={brandLogo}/>}
           bookingCard={
@@ -195,6 +214,8 @@ export default function PitchBooking({
         selectedDate={selectedDate}
         currentSlots={currentSlots}
         slotStatuses={Array.isArray(slotStatuses) ? slotStatuses : []}
+        duration={duration}
+        onDurationChange={setDuration}
         onPitchSelect={handlePitchSelect}
         selectedSlot={selectedSlot}
         selectedPitchType={selectedPitchType}
@@ -206,7 +227,7 @@ export default function PitchBooking({
         onFormChange={setFormData}
         onSubmit={handleBookingSubmit}
         isSubmitting={bookingMutation.isPending}
-        isWaiting={!!waitingSlotKey}
+        isWaiting={!!txReference}
         onCancelWait={handleCancelWait}
       />
     </div>

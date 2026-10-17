@@ -1,10 +1,13 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import FooterSection from "@/components/FooterSection";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Privacy Policy",
-};
+  description: "How K-Arena collects, uses and protects your personal information when you book a pitch.",
+  path: "/privacy",
+});
 
 export default function PrivacyPage() {
   return (

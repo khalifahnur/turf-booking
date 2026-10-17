@@ -44,17 +44,28 @@ export interface DayInfo {
   isWeekend: boolean;
 }
 
+/** Session length in minutes. */
+export type SessionLength = 60 | 120;
+
 export interface TimeSlot {
-  timeRange: string;  
-  startTime: string;  
+  timeRange: string;
+  startTime: string;
+  minutes: SessionLength;
 }
 
 export interface PitchOption {
   type: PitchType;
-  label: string;     
-  price: number;     
+  label: string;
   maxPlayers: number;
-  pitchSize: string; 
+  pitchSize: string;
+}
+
+/** One row from GET /bookings: a place on the pitch that is taken or held. */
+export interface BookingRecord {
+  date: string;
+  pitchType: string;
+  status: string;
+  time: string;
 }
 
 export interface BookingFormData {

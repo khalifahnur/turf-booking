@@ -218,6 +218,182 @@
   .slot-enter { animation: none; }
 }
 
+/*
+ * Header Directions + Call "figure 8" (see DirectionsCall in Navbar.tsx).
+ * .goo-a / .goo-b are shared by the filtered shape and the link above it so the
+ * two always move together.
+ */
+.goo-pair {
+  position: relative;
+  width: 4.4rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
+.goo-shapes {
+  position: absolute;
+  inset: 0;
+  filter: url(#nav-goo) drop-shadow(0 6px 10px rgba(18, 30, 52, 0.22));
+}
+.goo-lobe,
+.goo-link {
+  position: absolute;
+  top: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+}
+.goo-a { left: 0; }
+.goo-b { right: 0; }
+.goo-lobe,
+.goo-link {
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+/* Small enough that the neck thins out but stays connected, like a droplet
+   being stretched; any further and it snaps into two separate circles. */
+.goo-pair:hover .goo-a,
+.goo-pair:focus-within .goo-a { transform: translateX(-4px); }
+.goo-pair:hover .goo-b,
+.goo-pair:focus-within .goo-b { transform: translateX(4px); }
+
+.goo-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  outline: none;
+}
+.goo-link:focus-visible {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px #121e34;
+}
+.goo-link:active { transform: scale(0.92); }
+
+.goo-tip {
+  position: absolute;
+  top: calc(100% + 0.6rem);
+  left: 50%;
+  translate: -50% 4px;
+  padding: 0.25rem 0.6rem;
+  border-radius: 9999px;
+  background: #121e34;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, translate 0.2s ease;
+}
+.goo-link:hover .goo-tip,
+.goo-link:focus-visible .goo-tip {
+  opacity: 1;
+  translate: -50% 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .goo-lobe,
+  .goo-link,
+  .goo-tip { transition: none; }
+}
+
+/* A few pulses to draw the eye to Tryouts, then stillness: an endless animation
+   would keep the page repainting for as long as it is open. */
+@keyframes ssa-ping {
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.tryouts-ping {
+  animation: ssa-ping 1.4s cubic-bezier(0, 0, 0.2, 1) 4;
+}
+@media (prefers-reduced-motion: reduce) {
+  .tryouts-ping { animation: none; }
+}
+
+/*
+ * The navbar tucks away once the footer is fully uncovered, so it cannot sit on
+ * top of the footer's headline. useFooterReveal sets data-footer-revealed on
+ * <html>; pages without that hook never get the attribute, so it stays put.
+ */
+.site-nav {
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease;
+}
+html[data-footer-revealed="true"] .site-nav {
+  transform: translateY(-160%);
+  opacity: 0;
+  visibility: hidden; /* also takes it out of the keyboard tab order */
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.35s ease, visibility 0s linear 0.5s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-nav,
+  html[data-footer-revealed="true"] .site-nav { transition: none; }
+}
+
+/*
+ * Footer parallax.
+ *
+ * useFooterReveal writes --reveal (0 = footer still hidden under the page,
+ * 1 = fully uncovered) onto the fixed footer layer. Every moving layer turns
+ * that one number into its own progress --p using a start/span window, so
+ * layers settle one after another instead of all at once. Wherever --reveal is
+ * not set (the privacy and terms pages) it falls back to 1 and nothing moves.
+ * Only transform, opacity and clip-path read it, so it stays off the layout path.
+ */
+.fx {
+  --p: clamp(0, calc((var(--reveal, 1) - var(--start, 0)) / var(--span, 1)), 1);
+}
+
+.fx-rise {
+  transform: translate3d(0, calc((1 - var(--p)) * 56px), 0);
+  opacity: var(--p);
+}
+
+.fx-wordmark {
+  transform-origin: 50% 100%;
+  transform: translate3d(0, calc((1 - var(--p)) * 42%), 0) scale(calc(0.88 + var(--p) * 0.12));
+  clip-path: inset(calc((1 - var(--p)) * 75%) 0 0 0);
+  will-change: transform, clip-path;
+}
+
+/* Lights come up as the footer is uncovered. */
+.fx-dim {
+  opacity: calc((1 - var(--reveal, 1)) * 0.65);
+}
+
+/* Slow-moving depth layers behind the content. The radial gradients already
+   fade to nothing, so there is deliberately no filter: blur() here. Two blurred
+   700px layers kept the compositor busy under the whole page and roughly
+   halved the frame rate while the booking sheet slid in. */
+.fx-glow {
+  position: absolute;
+  border-radius: 9999px;
+}
+.fx-glow-a {
+  top: -12%;
+  right: -8%;
+  width: min(46rem, 70vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(136, 176, 63, 0.38), rgba(136, 176, 63, 0) 68%);
+  transform: translate3d(calc((1 - var(--reveal, 1)) * 14%), calc((1 - var(--reveal, 1)) * -40%), 0);
+}
+.fx-glow-b {
+  bottom: -20%;
+  left: -12%;
+  width: min(40rem, 64vw);
+  aspect-ratio: 1;
+  background: radial-gradient(circle, rgba(35, 62, 149, 0.34), rgba(35, 62, 149, 0) 68%);
+  transform: translate3d(calc((1 - var(--reveal, 1)) * -18%), calc((1 - var(--reveal, 1)) * 30%), 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fx-rise,
+  .fx-wordmark,
+  .fx-glow,
+  .fx-dim {
+    transform: none;
+    clip-path: none;
+    opacity: 1;
+  }
+  .fx-dim { opacity: 0; }
+}
+
 /* Add this to your globals.css */
 .custom-scrollbar::-webkit-scrollbar {
   width: 5px;
