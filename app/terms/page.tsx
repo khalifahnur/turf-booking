@@ -1,10 +1,13 @@
 import React from "react";
 import Navbar from "@/components/Navbar";
 import FooterSection from "@/components/FooterSection";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata = {
+export const metadata = pageMetadata({
   title: "Terms and Conditions",
-};
+  description: "The booking, payment, cancellation and facility rules for playing at K-Arena.",
+  path: "/terms",
+});
 
 export default function TermsPage() {
   return (

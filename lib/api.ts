@@ -6,8 +6,10 @@ export const fetchBookings = async () => {
   return res.json();
 };
 
+// Goes through our own Next.js route, which checks the admin session and holds
+// the API key. The Go API refuses this request from a browser.
 export const fetchBookingsAdmin = async () => {
-  const res = await fetch(`${BASE_URL}/admin/bookings`);
+  const res = await fetch("/api/admin/bookings", { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to fetch slots");
   return res.json();
 };

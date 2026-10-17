@@ -1,7 +1,7 @@
 "use client";
 
-import {  PITCH_OPTIONS } from "@/lib/booking";
-import { BookingFormData, DayInfo, PitchType, TimeSlot } from "@/lib/types";
+import { KSH, PITCH_OPTIONS, priceFor, SESSION_LENGTHS } from "@/lib/booking";
+import { BookingFormData, BookingRecord, DayInfo, PitchType, SessionLength, TimeSlot } from "@/lib/types";
 import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Field } from "./Field";
@@ -31,7 +31,9 @@ interface BookingSheetProps {
   onClose: () => void;
   selectedDate: DayInfo | null;
   currentSlots: TimeSlot[];
-  slotStatuses: any[];
+  slotStatuses: BookingRecord[];
+  duration: SessionLength;
+  onDurationChange: (minutes: SessionLength) => void;
   onPitchSelect: (slot: TimeSlot, pitchType: PitchType) => void;
   selectedSlot: TimeSlot | null;
   selectedPitchType: PitchType | null;
@@ -50,6 +52,8 @@ export default function BookingSheet({
   selectedDate,
   currentSlots,
   slotStatuses,
+  duration,
+  onDurationChange,
   onPitchSelect,
   selectedSlot,
   selectedPitchType,
@@ -124,6 +128,32 @@ export default function BookingSheet({
         day: "numeric",
       })}
     </p>
+
+    <div
+      role="radiogroup"
+      aria-label="Session length"
+      className="mt-4 inline-flex rounded-full border border-[#121e34]/10 bg-[#F8F5F2] p-1"
+    >
+      {SESSION_LENGTHS.map((l) => {
+        const active = duration === l.minutes;
+        return (
+          <button
+            key={l.minutes}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onDurationChange(l.minutes)}
+            className={`rounded-full px-4 py-1.5 text-xs font-bold transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] ${
+              active
+                ? "bg-[#1f4b50] text-white shadow-sm"
+                : "text-[#1f4b50] hover:bg-[#1f4b50]/10"
+            }`}
+          >
+            {l.short}
+          </button>
+        );
+      })}
+    </div>
   </div>
 
   <button
@@ -148,7 +178,7 @@ export default function BookingSheet({
     </svg>
   </button>
 </div>
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3" style={{ scrollbarWidth: "none" }}>
+      <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3" style={{ scrollbarWidth: "none" }}>
         {currentSlots.length > 0 ? (
           currentSlots.map((slot) => (
             <SlotCard
@@ -171,7 +201,9 @@ export default function BookingSheet({
   const renderBookingForm = () => {
     if (!selectedSlot || !selectedPitchType) return null;
     const pitch = PITCH_OPTIONS.find((p) => p.type === selectedPitchType)!;
-    const accentColor = pitch.type === "5Aside" ? "#88b03f" : "#1f4b50"; 
+    const accentColor = pitch.type === "5Aside" ? "#88b03f" : "#1f4b50";
+    const length = SESSION_LENGTHS.find((l) => l.minutes === selectedSlot.minutes)!;
+    const total = priceFor(pitch.type, selectedSlot.minutes);
 
     return (
       <>
@@ -203,13 +235,13 @@ export default function BookingSheet({
                   month: "short",
                   day: "numeric",
                 })}{" "}
-                · {selectedSlot.timeRange}
+                · {selectedSlot.timeRange} · {length.short}
               </p>
             </div>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+        <div className="flex-1 overflow-y-auto overscroll-contain" style={{ scrollbarWidth: "none" }}>
           <form 
           onSubmit={handleLocalSubmit} 
           className="px-6 py-6 space-y-3">
@@ -249,7 +281,14 @@ export default function BookingSheet({
               error={errors.phoneNumber}
             />
 
-            <div className="pt-6 space-y-3">
+            <div className="flex items-center justify-between rounded-xl border border-[#121e34]/10 bg-[#F8F5F2] px-4 py-3">
+              <span className="text-[11px] font-semibold uppercase tracking-widest text-[#2c2825]/70">
+                Total · {length.short}
+              </span>
+              <span className="text-base font-bold tabular-nums text-[#121e34]">{KSH(total)}</span>
+            </div>
+
+            <div className="pt-3 space-y-3">
               <button
                 type="submit"
                 disabled={isBusy}
@@ -294,7 +333,13 @@ export default function BookingSheet({
     <Sheet open={isOpen} onOpenChange={(open) => !open && !isBusy && onClose()}>
       <SheetContent
         side={"right"}
-        className="w-full p-0 flex flex-col [&>button]:hidden backdrop-blur-xl bg-white shadow-2xl border-[#121e34]/10"
+        // Smooth-scroll libraries (Lenis) hijack the wheel/touch events of the
+        // whole page; this opts the panel out so its own list scrolls natively.
+        data-lenis-prevent
+        // The panel is opaque, so a backdrop blur only costs GPU time and makes
+        // the slide-in stutter. transition-none stops the base `transition`
+        // fighting the keyframe slide.
+        className="w-full p-0 flex flex-col [&>button]:hidden bg-white shadow-2xl border-[#121e34]/10 transition-none will-change-transform"
       >
         <SheetTitle className="hidden"></SheetTitle>
         {selectedSlot ? renderBookingForm() : renderSlotList()}
