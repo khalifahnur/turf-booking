@@ -52,13 +52,6 @@ export const metadata: Metadata = {
   creator: ORG_NAME,
   publisher: ORG_NAME,
   category: "sports",
-
-  // Canonical URL and og:url are deliberately NOT set here: every page would
-  // inherit them and claim to be the homepage. Pages set their own through
-  // pageMetadata() in lib/seo.ts.
-  //
-  // The preview image comes from app/opengraph-image.tsx and
-  // app/twitter-image.tsx, which Next.js attaches automatically.
   openGraph: {
     type: "website",
     locale: "en_KE",
@@ -72,7 +65,9 @@ export const metadata: Metadata = {
     title: "K-Arena | Football Pitch Booking in Nairobi",
     description: DESCRIPTION,
   },
-
+  verification: {
+    google: "KuCcuv4fgoA4fbpmb_Qkxe1wOk83-wgyysABjo7rZxg",
+  },
   robots: {
     index: true,
     follow: true,

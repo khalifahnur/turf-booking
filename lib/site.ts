@@ -1,6 +1,3 @@
-// Facts about the venue that more than one part of the site needs. Change them
-// here and the navbar, footer, SEO metadata and structured data all follow.
-
 export const SITE_URL = (
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://karena.stsebastiansportsacademy.com"
 ).replace(/\/$/, "");
@@ -20,9 +17,6 @@ export const ADDRESS = {
   country: "KE",
 } as const;
 
-// Where the header "Tryouts" button leads. It opens a WhatsApp chat to the
-// venue with the enquiry already typed. Swap in a registration form or a
-// dedicated page here whenever one exists; nothing else needs to change.
 export const TRYOUTS_HREF = `https://wa.me/254712633130?text=${encodeURIComponent(
   "Hi K-Arena, I'd like to know about tryouts."
 )}`;

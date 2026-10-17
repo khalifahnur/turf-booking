@@ -1,10 +1,6 @@
 import type { Metadata } from "next";
 import { SITE_NAME } from "@/lib/site";
 
-/**
- * Per-page metadata with its own canonical URL and og:url. `title` is what goes
- * before " | K-Arena" in the tab (pass `absolute: true` to use it verbatim).
- */
 export function pageMetadata({
   title,
   description,

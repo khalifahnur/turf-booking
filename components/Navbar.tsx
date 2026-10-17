@@ -47,17 +47,13 @@ export default function Navbar({ brandLogo }: NavbarProps) {
             href={TRYOUTS_HREF}
             target="_blank"
             rel="noopener noreferrer"
-            className="group relative flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#121e34] hover:bg-[#1f4b50]
-                       text-white text-[13px] font-semibold rounded-full transition-all duration-300
-                       shadow-md hover:shadow-lg hover:-translate-y-0.5
+            className="group relative flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#f8f5f2]
+                       text-black text-[13px] font-semibold rounded-full transition-all duration-300
+                       shadow-md 
                        focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#88b03f] focus-visible:ring-offset-2"
           >
-            <Goal className="w-4 h-4 text-[#88b03f] transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110" aria-hidden="true" />
-            <span>Tryouts</span>
-            <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5" aria-hidden="true">
-              <span className="tryouts-ping absolute inline-flex h-full w-full rounded-full bg-[#88b03f] opacity-75" />
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[#88b03f]" />
-            </span>
+            <span>Register Tryouts</span>
+           
           </a>
 
           <DirectionsCall />
