@@ -5,6 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 /* A phone on its side: little height to spare. */
 @custom-variant short (@media (max-height: 560px));
+/* Almost no height at all (320x256 is a desktop at 400% zoom): nothing should stick. */
+@custom-variant tiny (@media (max-height: 340px));
 
 @theme inline {
   --color-background: var(--background);

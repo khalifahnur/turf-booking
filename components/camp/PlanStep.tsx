@@ -320,10 +320,11 @@ export default function PlanStep({
       {/* Stays at the bottom of the screen on phones so the total, the pay button
           and any problem with the payment are always in reach while the long form
           scrolls past. On a phone held sideways it drops its reassurance line and
-          shrinks, to leave room to see the cards above it. */}
+          shrinks, and on a screen only a few hundred pixels tall (a desktop at
+          400% zoom) it stops sticking, to leave room to see the cards above it. */}
       <div
         ref={barRef}
-        className={`sticky bottom-0 z-10 -mx-5 mt-8 border-t border-[#121e34]/10 bg-white px-5 pb-4 pt-3 shadow-[0_-10px_24px_-14px_rgba(18,30,52,0.25)] sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:pt-0 lg:shadow-none short:pb-2 short:pt-2`}
+        className={`sticky bottom-0 z-10 -mx-5 mt-8 border-t border-[#121e34]/10 bg-white px-5 pb-4 pt-3 shadow-[0_-10px_24px_-14px_rgba(18,30,52,0.25)] sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:pt-0 lg:shadow-none short:pb-2 short:pt-2 tiny:static tiny:shadow-none`}
       >
         {error && (
           <div
@@ -373,7 +374,7 @@ export default function PlanStep({
             <span>Choose a programme and a week to pay</span>
           )}
         </button>
-        <p className={`mt-2.5 flex items-start justify-center gap-1.5 text-center text-xs text-[#121e34]/70 short:hidden`}>
+        <p className={`mt-2.5 flex items-start justify-center gap-1.5 text-center text-xs text-[#121e34]/70 short:hidden ${error ? "hidden" : ""}`}>
           <Lock className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
           <span>
             An <span className="whitespace-nowrap">M-Pesa</span> prompt will be sent to{" "}
