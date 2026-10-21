@@ -421,6 +421,8 @@ export default function AdminDashboard() {
           className="mb-8 inline-flex items-center gap-1.5 rounded-xl border border-[#121e34]/10 bg-white p-1 shadow-sm"
           onKeyDown={(e) => {
             // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern.
+            // With a modifier held they belong to the browser (Alt+Left is Back).
+            if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
             const keys = TABS.map(([key]) => key);
             const at = keys.indexOf(tab);
             const next =

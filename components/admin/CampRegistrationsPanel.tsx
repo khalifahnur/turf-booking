@@ -88,14 +88,15 @@ export default function CampRegistrationsPanel() {
   const [week, setWeek] = useState<string>("all");
   const [search, setSearch] = useState("");
 
-  const { data, isLoading, isError, dataUpdatedAt } = useQuery({
+  const { data, isError, dataUpdatedAt } = useQuery({
     queryKey: ["admin-camp"],
     queryFn: fetchCampRegistrationsAdmin,
     refetchInterval: 15_000,
   });
   const records = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  // When the list could not be loaded the totals are unknown, not zero.
-  const unknown = isError && !Array.isArray(data);
+  // Until a list has arrived (still loading, paused while offline, or failed) the
+  // totals are unknown, not zero.
+  const unknown = !Array.isArray(data);
 
   const paid = useMemo(() => records.filter((r) => r.status === "Paid"), [records]);
   const paidTwice = useMemo(() => paid.filter((r) => r.duplicate), [paid]);
@@ -110,11 +111,20 @@ export default function CampRegistrationsPanel() {
     };
   }, [paid, records]);
 
-  // Who is coming each week, and how many lunches to prepare.
+  // Who is coming each week, and how many lunches to prepare. A child paid for
+  // twice in a week is still one child with one lunch, so rows are folded
+  // together by child (name and phone), as the "Children" total does.
   const headcount = useMemo(
     () =>
       CAMP_WEEKS.map((w) => {
-        const here = paid.filter((r) => r.weeks.includes(w.start));
+        const byChild = new Map<string, { program: string; lunch: boolean }>();
+        for (const r of paid) {
+          if (!r.weeks.includes(w.start)) continue;
+          const key = `${r.childName.toLowerCase()}|${r.phoneNumber}`;
+          const seen = byChild.get(key);
+          byChild.set(key, { program: seen?.program ?? r.program, lunch: (seen?.lunch ?? false) || r.lunch });
+        }
+        const here = [...byChild.values()];
         return {
           week: w,
           children: here.length,
@@ -170,7 +180,7 @@ export default function CampRegistrationsPanel() {
 
       {isError && (
         <p role="alert" className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
-          Couldn&rsquo;t load camp registrations. Check that the API is reachable and ADMIN_API_KEY matches on both servers.
+          Couldn&rsquo;t load camp registrations. Try again in a moment. If it keeps happening, sign out and back in, and check that the booking API is running and its ADMIN_API_KEY matches.
         </p>
       )}
 
@@ -273,17 +283,17 @@ export default function CampRegistrationsPanel() {
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[#121e34]/10 bg-white shadow-sm">
-        {isLoading || unknown || rows.length === 0 ? (
+        {unknown || rows.length === 0 ? (
           // Shown as an ordinary block: inside the wide, scrolling table the
           // message would sit off-screen on a phone.
           <p role="status" className="px-6 py-16 text-center text-sm font-semibold text-[#1f4b50]/80">
-            {isLoading
-              ? "Loading registrations…"
-              : unknown
+            {unknown
+              ? isError
                 ? "Registrations could not be loaded."
-                : records.length === 0
-                  ? "No registrations yet."
-                  : "No registrations match your filters."}
+                : "Loading registrations…"
+              : records.length === 0
+                ? "No registrations yet."
+                : "No registrations match your filters."}
           </p>
         ) : (
           <div className="overflow-x-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(18,30,52,0.1) transparent" }}>
@@ -372,7 +382,7 @@ export default function CampRegistrationsPanel() {
             </table>
           </div>
         )}
-        {!isLoading && !unknown && rows.length > 0 && (
+        {!unknown && rows.length > 0 && (
           <div className="flex items-center justify-between border-t border-[#121e34]/10 bg-[#F8F5F2] px-6 py-3.5">
             <span className="text-xs font-bold text-[#1f4b50]/80">
               {rows.length === records.length ? `${rows.length} registrations` : `${rows.length} of ${records.length} registrations`}

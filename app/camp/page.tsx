@@ -7,11 +7,24 @@ import { CAMP_DATES_LABEL, CAMP_NAME, CAMP_PROGRAMS, CAMP_WEEKS, isWeekOpen, tod
 import { pageMetadata } from "@/lib/seo";
 import { campJsonLd, jsonLdScript } from "@/lib/structured-data";
 
-export const metadata: Metadata = pageMetadata({
-  title: `${CAMP_NAME} 2026: Register Online`,
-  description: `Register your child for the K-Arena ${CAMP_NAME}, ${CAMP_DATES_LABEL}, off Ngong Road in Nairobi. Football skills training, matches and coaching, full or half day. Pay by M-Pesa.`,
-  path: "/camp",
-});
+// Search results and shared links should not keep inviting registration once the
+// camp is over, so the wording follows the same clock as the page.
+function campClosed(): boolean {
+  const today = todayInNairobi();
+  return CAMP_WEEKS.every((w) => !isWeekOpen(w, today));
+}
+
+export function generateMetadata(): Metadata {
+  const closed = campClosed();
+  return pageMetadata({
+    title: closed ? `${CAMP_NAME} 2026` : `${CAMP_NAME} 2026: Register Online`,
+    description: closed
+      ? `The K-Arena ${CAMP_NAME}, ${CAMP_DATES_LABEL}, off Ngong Road in Nairobi, has finished. Call us to hear about the next one.`
+      : `Register your child for the K-Arena ${CAMP_NAME}, ${CAMP_DATES_LABEL}, off Ngong Road in Nairobi. Football skills training, matches and coaching, full or half day. Pay by M-Pesa.`,
+    path: "/camp",
+    sharedImage: false, // app/camp/opengraph-image.tsx and twitter-image.tsx
+  });
+}
 
 // The form needs today's date (to close weeks that have ended), so this page is
 // drawn per request rather than frozen at build time.
@@ -19,7 +32,7 @@ export const dynamic = "force-dynamic";
 
 export default function CampPage() {
   const today = todayInNairobi();
-  const closed = CAMP_WEEKS.every((w) => !isWeekOpen(w, today));
+  const closed = campClosed();
 
   return (
     <div className="camp-page min-h-screen bg-[#f8f5f2] font-playfair text-[#2c2825]">

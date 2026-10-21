@@ -166,7 +166,7 @@ export const CAMP_TERMS: { title: string; body: string }[] = [
   },
   {
     title: "Your details",
-    body: "We keep the details you give here (your child's name, your name, email and phone number) to run the camp, take payment and contact you about it. Your phone number and email go to Paystack to process the M-Pesa payment, and your phone number to our SMS provider to send your confirmation. We do not sell them. Details of registrations that are never paid for are deleted after about a week. See our Privacy Policy for more.",
+    body: "We keep the details you give here (your child's name, your name, email and phone number) to run the camp, take payment and contact you about it. Your phone number and email go to Paystack to process the M-Pesa payment. Your phone number and the confirmation message, which names your child and gives the dates and amount paid, go to our SMS provider to send it to you. We do not sell your details. Details of registrations that are never paid for are deleted after about a week. See our Privacy Policy for more.",
   },
 ];
 
