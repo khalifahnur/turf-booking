@@ -10,7 +10,7 @@ import { EMAIL } from "@/lib/site";
  * the wording that was actually shown. Change it together with CAMP_TERMS and
  * with TermsVersion in the Go API (internal/camp/camp.go).
  */
-export const CAMP_TERMS_VERSION = "camp-2026-v2";
+export const CAMP_TERMS_VERSION = "camp-2026-v3";
 
 export const CAMP_NAME = "Holiday Football Camp";
 export const CAMP_FIRST_DAY = "2026-11-02"; // a Monday

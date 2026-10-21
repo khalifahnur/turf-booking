@@ -448,7 +448,7 @@ export default function AdminDashboard() {
               aria-controls={tab === key ? `panel-${key}` : undefined}
               tabIndex={tab === key ? 0 : -1}
               onClick={() => setTab(key)}
-              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-1"
+              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-1"
               style={{
                 backgroundColor: tab === key ? "#1f4b50" : "transparent",
                 color: tab === key ? "#ffffff" : "#1f4b50",

@@ -417,13 +417,15 @@ html[data-footer-revealed="true"] .site-nav {
 
 /* Keep a control that is scrolled into view (by Tab, or a validation error)
    clear of the fixed navbar and, on phones, the sticky pay bar. Without this a
-   keyboard user can land on a control that is hidden underneath them. */
+   keyboard user can land on a control that is hidden underneath them. The pay
+   bar changes height (an error banner joins it), so PlanStep measures it and
+   publishes the height as --camp-bar-h. */
 html:has(.camp-page) {
   scroll-padding-top: 6.5rem;
 }
 @media (max-width: 1023.98px) {
   html:has(.camp-page) {
-    scroll-padding-bottom: 10rem;
+    scroll-padding-bottom: calc(var(--camp-bar-h, 0px) + 1rem);
   }
 }
 

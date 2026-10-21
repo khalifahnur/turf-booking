@@ -49,24 +49,27 @@ export default function Summary({ childName, program, weeks, lunch, quote }: Sum
         Your registration
       </h3>
 
-      <dl className="mt-4 space-y-3">
-        <Row label="Child" value={childName.trim() || "—"} muted={!childName.trim()} />
-        <Row
-          label="Programme"
-          value={programInfo ? `${programInfo.label} · ${formatKes(programInfo.priceKes)}/wk` : "Not chosen yet"}
-          muted={!programInfo}
-        />
-        <Row
-          label="Weeks"
-          value={
-            !weeks.length
-              ? "None chosen yet"
-              : programInfo
-                ? `${weeks.length} × ${formatKes(quote.programPerWeek)}`
-                : `${weeks.length} ${weekWord}`
-          }
-          muted={!weeks.length}
-        />
+      {/* A list is not allowed inside a <dl>, so the week chips sit between two. */}
+      <div className="mt-4 space-y-3">
+        <dl className="space-y-3">
+          <Row label="Child" value={childName.trim() || "—"} muted={!childName.trim()} />
+          <Row
+            label="Programme"
+            value={programInfo ? `${programInfo.label} · ${formatKes(programInfo.priceKes)}/wk` : "Not chosen yet"}
+            muted={!programInfo}
+          />
+          <Row
+            label="Weeks"
+            value={
+              !weeks.length
+                ? "None chosen yet"
+                : programInfo
+                  ? `${weeks.length} × ${formatKes(quote.programPerWeek)}`
+                  : `${weeks.length} ${weekWord}`
+            }
+            muted={!weeks.length}
+          />
+        </dl>
         {weeks.length > 0 && (
           <ul className="flex flex-wrap gap-1.5" aria-label="Selected weeks">
             {weeks.map((w) => (
@@ -76,19 +79,21 @@ export default function Summary({ childName, program, weeks, lunch, quote }: Sum
             ))}
           </ul>
         )}
-        <Row
-          label={
-            <>
-              Lunch
-              <span className="block text-xs font-normal text-[#121e34]/65">
-                {formatKes(LUNCH_PER_DAY_KES)} × {CAMP_DAYS_PER_WEEK} days
-              </span>
-            </>
-          }
-          value={lunch && weeks.length ? `${weeks.length} × ${formatKes(quote.lunchPerWeek)}` : lunch ? "Added" : "No"}
-          muted={!lunch}
-        />
-      </dl>
+        <dl>
+          <Row
+            label={
+              <>
+                Lunch
+                <span className="block text-xs font-normal text-[#121e34]/65">
+                  {formatKes(LUNCH_PER_DAY_KES)} × {CAMP_DAYS_PER_WEEK} days
+                </span>
+              </>
+            }
+            value={lunch && weeks.length ? `${weeks.length} × ${formatKes(quote.lunchPerWeek)}` : lunch ? "Added" : "No"}
+            muted={!lunch}
+          />
+        </dl>
+      </div>
 
       <div className="mt-5 flex flex-col items-start gap-1 border-t border-dashed border-[#121e34]/15 pt-4 min-[360px]:flex-row min-[360px]:items-end min-[360px]:justify-between min-[360px]:gap-3">
         <span className="whitespace-nowrap text-xs font-bold uppercase tracking-[0.14em] text-[#121e34]/70">

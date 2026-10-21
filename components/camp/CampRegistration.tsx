@@ -105,7 +105,7 @@ export default function CampRegistration({ today }: { today: string }) {
   };
 
   const handlePay = () => {
-    if (!program || weeks.length === 0) return;
+    if (!program || weeks.length === 0 || mutation.isPending) return;
     setSubmitError(null);
     mutation.mutate({
       childName: cleanName(details.childName),

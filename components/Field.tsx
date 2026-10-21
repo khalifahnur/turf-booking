@@ -49,8 +49,9 @@ export function Field({
       </label>
       
       <div 
-        // The input draws no outline of its own, so the box shows focus instead.
-        className="relative flex items-center rounded-xl overflow-hidden border border-black/10 shadow-[0_2px_5px_rgba(0,0,0,0.02)] transition-all duration-300 focus-within:border-[#1f4b50] focus-within:ring-2 focus-within:ring-[#1f4b50]/30"
+        // The input draws no outline of its own, so the box shows focus instead: a ring,
+        // plus a transparent outline that forced-colors (high contrast) mode paints.
+        className="relative flex items-center rounded-xl overflow-hidden border border-black/10 shadow-[0_2px_5px_rgba(0,0,0,0.02)] transition-all duration-300 focus-within:border-[#1f4b50] focus-within:ring-2 focus-within:ring-[#1f4b50]/30 focus-within:outline-2 focus-within:outline-transparent"
         style={{
           backgroundColor: "#ffffff",
           fontFamily: font,

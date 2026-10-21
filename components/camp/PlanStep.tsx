@@ -1,6 +1,6 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import {
   AlertTriangle,
   Check,
@@ -76,7 +76,7 @@ function SectionTitle({ n, children, id }: { n: number; children: React.ReactNod
 
 /** Shared look of the selectable cards (programme, weeks, lunch). */
 const CARD =
-  "group/opt relative block cursor-pointer rounded-2xl border-2 border-[#121e34]/15 bg-white p-4 transition-all duration-200 hover:border-[#88b03f] has-checked:border-[#88b03f] has-checked:bg-[#88b03f]/[0.07] has-focus-visible:ring-2 has-focus-visible:ring-[#1f4b50] has-focus-visible:ring-offset-2 has-disabled:cursor-not-allowed has-disabled:opacity-50 has-disabled:hover:border-[#121e34]/15";
+  "group/opt relative block cursor-pointer rounded-2xl border-2 border-[#121e34]/15 bg-white p-4 transition-all duration-200 hover:border-[#88b03f] has-checked:border-[#88b03f] has-checked:bg-[#88b03f]/[0.07] has-focus-visible:ring-2 has-focus-visible:ring-[#1f4b50] has-focus-visible:ring-offset-2 has-focus-visible:outline-2 has-focus-visible:outline-transparent has-disabled:cursor-not-allowed has-disabled:opacity-50 has-disabled:hover:border-[#121e34]/15";
 
 /**
  * The real radio/checkbox, stretched invisibly over its whole card. Covering the
@@ -125,6 +125,30 @@ export default function PlanStep({
   const ready = !!program && weeks.length > 0;
   const firstName = childName.trim().split(" ")[0];
 
+  // The pay bar sticks to the bottom of the screen on phones and grows when an
+  // error joins it. Publish its height so scroll-padding (globals.css) keeps a
+  // focused control from landing underneath it. Where the bar is not sticky
+  // (large screens) nothing needs to be reserved.
+  const barRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+    const root = document.documentElement;
+    const publish = () => {
+      if (getComputedStyle(bar).position === "sticky") root.style.setProperty("--camp-bar-h", `${bar.offsetHeight}px`);
+      else root.style.removeProperty("--camp-bar-h");
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(bar);
+    window.addEventListener("resize", publish);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", publish);
+      root.style.removeProperty("--camp-bar-h");
+    };
+  }, []);
+
   const payTone = isPaying
     ? "cursor-wait bg-[#88b03f] text-[#121e34]"
     : ready
@@ -137,7 +161,7 @@ export default function PlanStep({
         type="button"
         onClick={onBack}
         disabled={isPaying}
-        className="-ml-3 mb-2 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-[#1f4b50] transition-colors hover:bg-[#1f4b50]/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] disabled:opacity-50"
+        className="-ml-3 mb-2 inline-flex min-h-11 items-center gap-1 rounded-full px-3 text-sm font-semibold text-[#1f4b50] transition-colors hover:bg-[#1f4b50]/8 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] disabled:opacity-50"
       >
         <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Back to details
       </button>
@@ -201,7 +225,7 @@ export default function PlanStep({
                 type="button"
                 onClick={onToggleAllWeeks}
                 disabled={isPaying}
-                className="-mr-3 inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold text-[#1f4b50] underline-offset-2 transition-colors hover:bg-[#1f4b50]/8 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] disabled:opacity-50"
+                className="-mr-3 inline-flex min-h-11 items-center rounded-full px-3 text-xs font-semibold text-[#1f4b50] underline-offset-2 transition-colors hover:bg-[#1f4b50]/8 hover:underline focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] disabled:opacity-50"
               >
                 {allSelected ? "Clear all" : "Select all weeks"}
               </button>
@@ -298,6 +322,7 @@ export default function PlanStep({
           scrolls past. On a phone held sideways it drops its reassurance line and
           shrinks, to leave room to see the cards above it. */}
       <div
+        ref={barRef}
         className={`sticky bottom-0 z-10 -mx-5 mt-8 border-t border-[#121e34]/10 bg-white px-5 pb-4 pt-3 shadow-[0_-10px_24px_-14px_rgba(18,30,52,0.25)] sm:-mx-8 sm:px-8 lg:static lg:mx-0 lg:border-0 lg:bg-transparent lg:p-0 lg:pt-0 lg:shadow-none short:pb-2 short:pt-2`}
       >
         {error && (
@@ -312,7 +337,7 @@ export default function PlanStep({
                 <button
                   type="button"
                   onClick={onBack}
-                  className="mt-2 inline-flex min-h-11 items-center rounded-full font-semibold underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-800"
+                  className="mt-2 inline-flex min-h-11 items-center rounded-full font-semibold underline underline-offset-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-red-800"
                 >
                   Go back and check your details
                 </button>
@@ -322,9 +347,14 @@ export default function PlanStep({
         )}
         <button
           type="button"
-          onClick={onPay}
-          disabled={!ready || isPaying}
-          className={`flex min-h-14 w-full items-center justify-center gap-2.5 rounded-full px-4 py-2 text-center text-[14px] font-bold leading-tight shadow-md transition-all duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:px-6 sm:text-[15px] short:min-h-12 ${payTone}`}
+          // aria-disabled, not disabled, while the request is in flight: a
+          // disabled button drops keyboard focus to the page, and a keyboard user
+          // who pressed it would have to tab all the way back after an error.
+          onClick={isPaying ? undefined : onPay}
+          disabled={!ready}
+          aria-disabled={isPaying || undefined}
+          aria-busy={isPaying || undefined}
+          className={`flex min-h-14 w-full items-center justify-center gap-2.5 rounded-full px-4 py-2 text-center text-[14px] font-bold leading-tight shadow-md transition-all duration-300 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:px-6 sm:text-[15px] short:min-h-12 ${payTone}`}
         >
           {isPaying ? (
             <>

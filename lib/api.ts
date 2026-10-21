@@ -16,14 +16,18 @@ export const fetchBookingsAdmin = async () => {
   return res.json();
 };
 
-// The Go API answers refusals (400, 409, 429...) with a short plain-text
-// sentence written for the person filling in the form. Anything else (a 502
-// page from the proxy, a 500) is not, so it is replaced by `fallback` instead
-// of being shown to a parent as raw markup or a technical message.
+// The Go API answers a refusal with a short plain-text sentence written for the
+// person filling in the form. Responses it marks with X-User-Message (any
+// status, including the 5xx it writes itself) are shown as they are. Without
+// the marker only the usual 4xx refusals are trusted; a 502 page from a proxy or
+// a bare 500 is not, so it is replaced by `fallback` instead of reaching a
+// parent as raw markup or a technical message.
 const READABLE_STATUSES = new Set([400, 409, 413, 415, 422, 429]);
+const MAX_MESSAGE_LENGTH = 400;
 
 async function errorMessage(res: Response, fallback: string): Promise<string> {
-  if (!READABLE_STATUSES.has(res.status)) return fallback;
+  const marked = res.headers.get("X-User-Message") === "1";
+  if (!marked && !READABLE_STATUSES.has(res.status)) return fallback;
   const text = (await res.text()).trim();
   let message = text;
   try {
@@ -32,7 +36,7 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   } catch {
     // plain text, which is what the API normally sends
   }
-  if (!message || message.length > 200 || message.startsWith("<")) return fallback;
+  if (!message || message.length > MAX_MESSAGE_LENGTH || message.startsWith("<")) return fallback;
   return message;
 }
 

@@ -1,5 +1,6 @@
 import { ImageResponse } from "next/og";
 import { PITCH_OPTIONS, PRICES_KES, SESSION_LENGTHS } from "@/lib/booking";
+import { CAMP_DATES_LABEL, CAMP_NAME } from "@/lib/camp";
 import { SITE_NAME } from "@/lib/site";
 
 export const OG_SIZE = { width: 1200, height: 630 };
@@ -79,16 +80,21 @@ export function renderOgImage() {
   });
 }
 
-export const CAMP_OG_ALT = "K-Arena Holiday Football Camp, 2 November to 18 December 2026, Nairobi";
+export const CAMP_OG_ALT = `${SITE_NAME} ${CAMP_NAME}, ${CAMP_DATES_LABEL}, Nairobi`;
 
-/** The card for the holiday camp page, so a shared /camp link advertises the camp. */
+/**
+ * The card for the holiday camp page, so a shared /camp link advertises the
+ * camp. It is drawn once at build time, so it says nothing that stops being true
+ * when registration closes (no "register now"), and its dates come from the same
+ * constants as the page.
+ */
 export function renderCampOgImage() {
   return renderCard({
     kicker: `${SITE_NAME} · Ngong Road, Nairobi`,
     title: "HOLIDAY CAMP",
     titleSize: 148,
-    subtitle: "Football for children · 2 Nov – 18 Dec 2026",
-    cta: "Register and pay with M-Pesa",
+    subtitle: `Football for children · ${CAMP_DATES_LABEL}`,
+    cta: "Skills, matches & coaching",
     note: "Full day or half day",
   });
 }

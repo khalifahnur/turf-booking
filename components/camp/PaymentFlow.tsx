@@ -77,7 +77,7 @@ function Awaiting({ total, phoneLabel, childName, onBackToPlan, headingRef }: Pa
         <button
           type="button"
           onClick={onBackToPlan}
-          className="min-h-11 rounded-full px-5 text-sm font-semibold text-[#1f4b50] transition-colors hover:bg-[#1f4b50]/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50]"
+          className="min-h-11 rounded-full px-5 text-sm font-semibold text-[#1f4b50] transition-colors hover:bg-[#1f4b50]/8 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50]"
         >
           Change plan or number
         </button>
@@ -134,14 +134,14 @@ function Success({ childName, programLabel, weeks, lunch, total, phoneLabel, onR
       <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
         <Link
           href="/"
-          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#88b03f] px-7 text-sm font-bold text-[#121e34] shadow-md transition-colors hover:bg-[#769a35] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:w-auto"
+          className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#88b03f] px-7 text-sm font-bold text-[#121e34] shadow-md transition-colors hover:bg-[#769a35] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:w-auto"
         >
           Back to home <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
         <button
           type="button"
           onClick={onRegisterAnother}
-          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-[#1f4b50]/25 px-7 text-sm font-semibold text-[#1f4b50] transition-colors hover:bg-[#1f4b50]/8 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] sm:w-auto"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-[#1f4b50]/25 px-7 text-sm font-semibold text-[#1f4b50] transition-colors hover:bg-[#1f4b50]/8 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] sm:w-auto"
         >
           Register another child
         </button>
@@ -178,7 +178,7 @@ function Failed({ onBackToPlan, headingRef }: PanelProps) {
         <button
           type="button"
           onClick={onBackToPlan}
-          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#88b03f] px-8 text-sm font-bold text-[#121e34] shadow-md transition-colors hover:bg-[#769a35] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:w-auto"
+          className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#88b03f] px-8 text-sm font-bold text-[#121e34] shadow-md transition-colors hover:bg-[#769a35] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:w-auto"
         >
           Try again
         </button>

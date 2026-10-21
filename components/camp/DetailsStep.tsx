@@ -104,7 +104,7 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
         </div>
       </div>
 
-      <section aria-labelledby="camp-terms-title" className="mt-2">
+      <div className="mt-2">
         <h3 id="camp-terms-title" className="text-xs font-bold uppercase tracking-[0.14em] text-[#121e34]/70">
           Terms &amp; conditions
         </h3>
@@ -117,7 +117,7 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
             // Smooth-scroll libraries (Lenis) would otherwise hijack the wheel
             // and scroll the page instead of this box.
             data-lenis-prevent
-            className="max-h-56 overflow-y-auto overscroll-contain rounded-2xl border border-[#121e34]/10 bg-[#f8f5f2] p-4 text-[13px] leading-relaxed text-[#121e34]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50]"
+            className="max-h-56 overflow-y-auto overscroll-contain rounded-2xl border border-[#121e34]/10 bg-[#f8f5f2] p-4 text-[13px] leading-relaxed text-[#121e34]/80 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50]"
           >
             <ol className="space-y-3.5 [overflow-wrap:anywhere]">
               {CAMP_TERMS.map((t, i) => (
@@ -137,7 +137,7 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
         </div>
 
         <label
-          className={`relative mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-[#1f4b50] has-focus-visible:ring-offset-2 ${
+          className={`relative mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-[#1f4b50] has-focus-visible:ring-offset-2 has-focus-visible:outline-2 has-focus-visible:outline-transparent ${
             errors.acceptedTerms ? "border-red-500 bg-red-50/60" : "border-[#121e34]/10 bg-white hover:border-[#88b03f]/60"
           }`}
         >
@@ -169,12 +169,12 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
             {errors.acceptedTerms}
           </p>
         )}
-      </section>
+      </div>
 
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
-          className="group inline-flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#88b03f] pl-7 pr-2.5 text-[14px] font-bold text-[#121e34] shadow-md transition-all duration-300 hover:bg-[#769a35] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto sm:min-w-56"
+          className="group inline-flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#88b03f] pl-7 pr-2.5 text-[14px] font-bold text-[#121e34] shadow-md transition-all duration-300 hover:bg-[#769a35] hover:shadow-lg focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto sm:min-w-56"
         >
           Continue
           <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#121e34] transition-transform duration-300 group-hover:translate-x-0.5">
