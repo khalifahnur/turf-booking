@@ -1,3 +1,4 @@
+import { CAMP_FIRST_DAY, CAMP_LAST_DAY, CAMP_NAME, CAMP_PROGRAMS, LUNCH_PER_DAY_KES } from "@/lib/camp";
 import { OPENING_HOURS, PITCH_OPTIONS, PRICES_KES, SESSION_LENGTHS } from "@/lib/booking";
 import {
   ADDRESS,
@@ -88,6 +89,49 @@ export function homepageJsonLd() {
         publisher: { "@id": `${SITE_URL}/#venue` },
       },
     ],
+  };
+}
+
+/** schema.org Event for the holiday camp, so it can appear as an event in search. */
+export function campJsonLd() {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Event",
+    name: `${SITE_NAME} ${CAMP_NAME} 2026`,
+    description:
+      "Holiday football camp for children: football skills training, fun games and matches, professional coaching, fitness and discipline, in a safe and supportive environment.",
+    startDate: CAMP_FIRST_DAY,
+    endDate: CAMP_LAST_DAY,
+    eventStatus: "https://schema.org/EventScheduled",
+    eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+    url: `${SITE_URL}/camp`,
+    image: `${SITE_URL}/opengraph-image`,
+    location: {
+      "@type": "Place",
+      name: SITE_NAME,
+      address: {
+        "@type": "PostalAddress",
+        streetAddress: ADDRESS.street,
+        addressLocality: ADDRESS.locality,
+        addressCountry: ADDRESS.country,
+      },
+    },
+    organizer: { "@type": "Organization", name: ORG_NAME, url: SITE_URL },
+    offers: CAMP_PROGRAMS.map((p) => ({
+      "@type": "Offer",
+      name: `${p.label} (${p.hours}), per week`,
+      price: p.priceKes,
+      priceCurrency: "KES",
+      availability: "https://schema.org/InStock",
+      url: `${SITE_URL}/camp`,
+    })),
+    // Lunch is an optional extra of LUNCH_PER_DAY_KES per day.
+    additionalProperty: {
+      "@type": "PropertyValue",
+      name: "Optional lunch (per day)",
+      value: LUNCH_PER_DAY_KES,
+      unitText: "KES",
+    },
   };
 }
 

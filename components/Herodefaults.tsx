@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
 export function DefaultHeroTitle() {
@@ -28,7 +29,6 @@ export function DefaultHeroExtra() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const TRYOUTS_FORM_URL = "https://forms.cloud.microsoft/Pages/ResponsePage.aspx?id=ayHaDsgfk0iDUzegbnKX_ue2WRxk7GJHo8WysPdwzdpUNUw4SlM4V01DUllNMkFLQVJVRjVXTVZXQi4u";
-  const HOLIDAY_CAMPS_FORM_URL = "#";
 
   const scrollToCalendar = () => {
     const calendarSection = document.getElementById("booking-calendar");
@@ -144,10 +144,8 @@ export function DefaultHeroExtra() {
                 </div>
               </a>
 
-              <a
-                href={HOLIDAY_CAMPS_FORM_URL}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href="/camp"
                 onClick={() => setIsModalOpen(false)}
                 className="bg-white/10 hover:bg-white/20 border border-white/20 text-white pl-5 pr-3 py-3 rounded-full text-xs sm:text-sm font-medium transition-colors flex items-center justify-between shadow-md"
               >
@@ -157,7 +155,7 @@ export function DefaultHeroExtra() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
                   </svg>
                 </div>
-              </a>
+              </Link>
             </div>
           </div>
         </div>

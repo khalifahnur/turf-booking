@@ -1,7 +1,7 @@
 "use client";
 
 import { BRAND } from "@/lib/booking";
-import React from "react";
+import React, { useId } from "react";
 
 interface FieldProps {
   label: string;
@@ -14,6 +14,9 @@ interface FieldProps {
   prefix?: string;
   error?: string;
   maxLength?: number;
+  name?: string;
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }
 
 export function Field({
@@ -27,12 +30,18 @@ export function Field({
   prefix,
   error,
   maxLength,
+  name,
+  autoComplete,
+  inputMode,
 }: FieldProps) {
   const { font } = BRAND;
+  const id = useId();
+  const errorId = `${id}-error`;
   
   return (
     <div className="mb-5 relative">
       <label
+        htmlFor={id}
         className="block text-[11px] font-semibold uppercase tracking-widest mb-1.5 ml-1"
         style={{ color: "#2c2825", opacity: 0.7, fontFamily: font }}
       >
@@ -62,6 +71,12 @@ export function Field({
         )}
         
         <input
+          id={id}
+          name={name}
+          autoComplete={autoComplete}
+          inputMode={inputMode ?? (type === "tel" ? "numeric" : undefined)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           required={required}
           type={type}
           value={value}
@@ -89,7 +104,7 @@ export function Field({
       </div>
       
       {error && (
-        <span className="text-red-500 text-[12px] font-medium mt-1.5 ml-1 block">
+        <span id={errorId} role="alert" className="text-red-500 text-[12px] font-medium mt-1.5 ml-1 block">
           {error}
         </span>
       )}

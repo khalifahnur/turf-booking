@@ -7,6 +7,7 @@ import { fetchBookings, fetchBookingsAdmin } from "@/lib/api";
 import { BRAND } from "@/lib/booking";
 import Link from "next/link";
 import Image from "next/image";
+import CampRegistrationsPanel from "@/components/admin/CampRegistrationsPanel";
 
 function formatDate(raw: string) {
   try {
@@ -248,6 +249,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "Confirmed" | "Pending" | "Failed"
   >("all");
+  const [tab, setTab] = useState<"bookings" | "camp">("bookings");
 
   const {
     data: bookings = [],
@@ -408,6 +410,40 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-[1320px] mx-auto px-6 sm:px-8 py-8">
+        <div
+          role="tablist"
+          aria-label="Dashboard sections"
+          className="mb-8 inline-flex items-center gap-1.5 rounded-xl border border-[#121e34]/10 bg-white p-1 shadow-sm"
+        >
+          {([
+            ["bookings", "Pitch bookings"],
+            ["camp", "Holiday camp"],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              id={`tab-${key}`}
+              aria-selected={tab === key}
+              aria-controls={`panel-${key}`}
+              onClick={() => setTab(key)}
+              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all"
+              style={{
+                backgroundColor: tab === key ? "#1f4b50" : "transparent",
+                color: tab === key ? "#ffffff" : "#1f4b50",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "camp" ? (
+          <div role="tabpanel" id="panel-camp" aria-labelledby="tab-camp">
+            <CampRegistrationsPanel />
+          </div>
+        ) : (
+          <div role="tabpanel" id="panel-bookings" aria-labelledby="tab-bookings">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-[1.75rem] font-extrabold tracking-tight leading-tight text-[#121e34]">
@@ -617,6 +653,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+          </div>
+        )}
       </main>
     </div>
   );
