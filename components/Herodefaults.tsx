@@ -59,7 +59,7 @@ export function DefaultHeroExtra() {
           onClick={() => setIsModalOpen(true)}
           className="bg-[#88b03f] text-white pl-6 pr-2.5 py-2 rounded-full text-xs md:text-[13px] font-medium hover:bg-[#769a35] transition-colors flex items-center gap-3 shadow-sm"
         >
-          Register
+          Football Registration
           <div className="w-7 h-7 bg-white text-[#88b03f] rounded-full flex items-center justify-center">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M12 5l7 7-7 7" />
