@@ -3,6 +3,8 @@
 @import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
+/* A phone on its side: little height to spare. */
+@custom-variant short (@media (max-height: 560px));
 
 @theme inline {
   --color-background: var(--background);

@@ -3,7 +3,7 @@ import { CalendarDays, Clock, Users } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import FooterSection from "@/components/FooterSection";
 import CampRegistration from "@/components/camp/CampRegistration";
-import { CAMP_DATES_LABEL, CAMP_NAME, CAMP_PROGRAMS, todayInNairobi } from "@/lib/camp";
+import { CAMP_DATES_LABEL, CAMP_NAME, CAMP_PROGRAMS, CAMP_WEEKS, isWeekOpen, todayInNairobi } from "@/lib/camp";
 import { pageMetadata } from "@/lib/seo";
 import { campJsonLd, jsonLdScript } from "@/lib/structured-data";
 
@@ -18,6 +18,9 @@ export const metadata: Metadata = pageMetadata({
 export const dynamic = "force-dynamic";
 
 export default function CampPage() {
+  const today = todayInNairobi();
+  const closed = CAMP_WEEKS.every((w) => !isWeekOpen(w, today));
+
   return (
     <div className="camp-page min-h-screen bg-[#f8f5f2] font-playfair text-[#2c2825]">
       <Navbar />
@@ -30,8 +33,11 @@ export default function CampPage() {
 
         <div className="mx-auto max-w-6xl lg:px-8">
           <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 font-sans text-xs font-semibold uppercase tracking-[0.16em] text-white/90">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#88b03f]" aria-hidden="true" />
-            Registration open
+            <span
+              className={`h-1.5 w-1.5 rounded-full ${closed ? "bg-white/60" : "bg-[#88b03f]"}`}
+              aria-hidden="true"
+            />
+            {closed ? "Registration closed" : "Registration open"}
           </p>
 
           <h1 className="mt-4 max-w-3xl text-[2.2rem] font-semibold leading-[1.05] tracking-tight sm:text-5xl lg:text-[3.4rem]">
@@ -42,8 +48,9 @@ export default function CampPage() {
           </h1>
 
           <p className="mt-4 max-w-xl font-sans text-[15px] leading-relaxed text-white/80 sm:text-base">
-            Seven weeks of football skills, matches and new friendships with professional coaches. Register your child in
-            two quick steps and pay securely with M-Pesa.
+            {closed
+              ? "Seven weeks of football skills, matches and new friendships with professional coaches. This year's camp has finished."
+              : "Seven weeks of football skills, matches and new friendships with professional coaches. Register your child in two quick steps and pay securely with M-Pesa."}
           </p>
 
           <ul className="mt-6 flex flex-wrap gap-2.5 font-sans text-[13px] font-semibold">
@@ -63,10 +70,10 @@ export default function CampPage() {
       </header>
 
       <main className="relative z-10 -mt-16 pb-16 font-sans lg:-mt-24 lg:pb-24">
-        <CampRegistration today={todayInNairobi()} />
+        <CampRegistration today={today} />
       </main>
 
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(campJsonLd()) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(campJsonLd({ closed })) }} />
       <FooterSection />
     </div>
   );

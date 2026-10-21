@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Mail, Phone } from "lucide-react";
-import { registerCamp } from "@/lib/api";
+import { CAMP_FAILED, CampApiError, registerCamp } from "@/lib/api";
 import {
   CAMP_PROGRAMS,
   CAMP_TERMS_VERSION,
   CAMP_WEEKS,
+  DETAILS_PROBLEM,
   cleanName,
   emailError,
   formatPhone,
@@ -40,6 +41,10 @@ export default function CampRegistration({ today }: { today: string }) {
   const [weeks, setWeeks] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
+  // What the server actually charged, which is what the receipt must show.
+  const [charged, setCharged] = useState<number | null>(null);
+  // Bumped to bring focus back to the plan heading after a payment screen closes.
+  const [focusTick, setFocusTick] = useState(0);
 
   const cardRef = useRef<HTMLDivElement>(null);
   const headingRef = useRef<HTMLHeadingElement>(null);
@@ -58,12 +63,15 @@ export default function CampRegistration({ today }: { today: string }) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     cardRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "start" });
     headingRef.current?.focus({ preventScroll: true });
-  }, [step]);
+  }, [step, focusTick]);
 
   const mutation = useMutation({
     mutationFn: registerCamp,
-    onSuccess: (data) => setReference(data.reference),
-    onError: (err: Error) => setSubmitError(err.message),
+    onSuccess: (data) => {
+      setCharged(data.total);
+      setReference(data.reference);
+    },
+    onError: (err) => setSubmitError(err instanceof CampApiError ? err.message : CAMP_FAILED),
   });
 
   const change: React.ComponentProps<typeof DetailsStep>["onChange"] = (key, value) => {
@@ -73,6 +81,7 @@ export default function CampRegistration({ today }: { today: string }) {
 
   const goTo = (next: 1 | 2) => {
     moveFocus.current = true;
+    setSubmitError(null);
     setStep(next);
   };
 
@@ -111,15 +120,18 @@ export default function CampRegistration({ today }: { today: string }) {
     });
   };
 
+  // Siblings are the usual reason to register again, so the parent's details
+  // stay. The terms are ticked afresh: each registration records its own consent.
   const startAgain = () => {
     mutation.reset();
-    setDetails(EMPTY);
+    setDetails((d) => ({ ...EMPTY, parentName: d.parentName, email: d.email, phone: d.phone }));
     setErrors({});
     setProgram(null);
     setLunch(false);
     setWeeks([]);
     setSubmitError(null);
     setReference(null);
+    setCharged(null);
     goTo(1);
   };
 
@@ -127,6 +139,9 @@ export default function CampRegistration({ today }: { today: string }) {
     mutation.reset();
     setSubmitError(null);
     setReference(null);
+    setCharged(null);
+    moveFocus.current = true;
+    setFocusTick((t) => t + 1);
   };
 
   if (openWeeks.length === 0) {
@@ -143,7 +158,7 @@ export default function CampRegistration({ today }: { today: string }) {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 lg:px-8">
+    <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 lg:px-8">
       <div
         ref={cardRef}
         className="rounded-[28px] bg-white p-5 shadow-[0_24px_60px_-24px_rgba(18,30,52,0.28)] ring-1 ring-[#121e34]/5 sm:p-8"
@@ -156,7 +171,7 @@ export default function CampRegistration({ today }: { today: string }) {
             programLabel={CAMP_PROGRAMS.find((p) => p.id === program)?.label ?? ""}
             weeks={selectedWeeks}
             lunch={lunch}
-            total={quote.total}
+            total={charged ?? quote.total}
             phoneLabel={phoneLabel}
             onBackToPlan={backToPlan}
             onRegisterAnother={startAgain}
@@ -187,6 +202,7 @@ export default function CampRegistration({ today }: { today: string }) {
                   quote={quote}
                   selectedWeeks={selectedWeeks}
                   error={submitError}
+                  errorIsAboutDetails={!!submitError && DETAILS_PROBLEM.test(submitError)}
                   isPaying={mutation.isPending}
                   headingRef={headingRef}
                   onProgram={(id) => {

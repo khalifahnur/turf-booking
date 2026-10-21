@@ -16,15 +16,24 @@ export const fetchBookingsAdmin = async () => {
   return res.json();
 };
 
-// The Go API answers errors with plain text (or JSON with a `message`); either
-// way the text is written for the person filling in the form.
+// The Go API answers refusals (400, 409, 429...) with a short plain-text
+// sentence written for the person filling in the form. Anything else (a 502
+// page from the proxy, a 500) is not, so it is replaced by `fallback` instead
+// of being shown to a parent as raw markup or a technical message.
+const READABLE_STATUSES = new Set([400, 409, 413, 415, 422, 429]);
+
 async function errorMessage(res: Response, fallback: string): Promise<string> {
-  const text = await res.text();
+  if (!READABLE_STATUSES.has(res.status)) return fallback;
+  const text = (await res.text()).trim();
+  let message = text;
   try {
-    return JSON.parse(text).message || text;
+    const parsed = JSON.parse(text);
+    if (typeof parsed?.message === "string") message = parsed.message.trim();
   } catch {
-    return text.trim() || fallback;
+    // plain text, which is what the API normally sends
   }
+  if (!message || message.length > 200 || message.startsWith("<")) return fallback;
+  return message;
 }
 
 export const initiateBooking = async (bookingData: any) => {
@@ -41,19 +50,45 @@ export const initiateBooking = async (bookingData: any) => {
   return res.json();
 };
 
+/** A failed camp registration; `message` is safe to show to a parent as it is. */
+export class CampApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | null,
+  ) {
+    super(message);
+    this.name = "CampApiError";
+  }
+}
+
+const CAMP_UNREACHABLE =
+  "We couldn't reach the registration service. Please check your connection and try again. If an M-Pesa prompt arrives, you can still enter your PIN and we'll confirm by SMS.";
+export const CAMP_FAILED =
+  "We couldn't start your registration just now. Please try again in a moment. If an M-Pesa prompt arrives, you can still enter your PIN and we'll confirm by SMS.";
+
 /** Starts a camp registration: validates it, prices it and sends the M-Pesa prompt. */
 export const registerCamp = async (
   payload: CampRegistrationPayload,
 ): Promise<{ reference: string; total: number }> => {
-  const res = await fetch(`${BASE_URL}/camp/register`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  if (!res.ok) {
-    throw new Error(await errorMessage(res, "We couldn't start your registration. Please try again."));
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}/camp/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new CampApiError(CAMP_UNREACHABLE, null);
   }
-  return res.json();
+  if (!res.ok) {
+    throw new CampApiError(await errorMessage(res, CAMP_FAILED), res.status);
+  }
+  try {
+    return await res.json();
+  } catch {
+    // The prompt may well have been sent; do not show a parsing error.
+    throw new CampApiError(CAMP_FAILED, res.status);
+  }
 };
 
 // Like the bookings list, this goes through our own route, which checks the

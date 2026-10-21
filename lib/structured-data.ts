@@ -92,16 +92,21 @@ export function homepageJsonLd() {
   };
 }
 
-/** schema.org Event for the holiday camp, so it can appear as an event in search. */
-export function campJsonLd() {
+/**
+ * schema.org Event for the holiday camp, so it can appear as an event in search.
+ * Once registration has closed the offers are left out rather than advertising
+ * places that can no longer be bought.
+ */
+export function campJsonLd({ closed = false }: { closed?: boolean } = {}) {
   return {
     "@context": "https://schema.org",
     "@type": "Event",
     name: `${SITE_NAME} ${CAMP_NAME} 2026`,
     description:
       "Holiday football camp for children: football skills training, fun games and matches, professional coaching, fitness and discipline, in a safe and supportive environment.",
-    startDate: CAMP_FIRST_DAY,
-    endDate: CAMP_LAST_DAY,
+    // The camp runs 8:30am to 4:00pm Nairobi time (UTC+3) from the first Monday to the last Friday.
+    startDate: `${CAMP_FIRST_DAY}T08:30:00+03:00`,
+    endDate: `${CAMP_LAST_DAY}T16:00:00+03:00`,
     eventStatus: "https://schema.org/EventScheduled",
     eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
     url: `${SITE_URL}/camp`,
@@ -117,21 +122,28 @@ export function campJsonLd() {
       },
     },
     organizer: { "@type": "Organization", name: ORG_NAME, url: SITE_URL },
-    offers: CAMP_PROGRAMS.map((p) => ({
-      "@type": "Offer",
-      name: `${p.label} (${p.hours}), per week`,
-      price: p.priceKes,
-      priceCurrency: "KES",
-      availability: "https://schema.org/InStock",
-      url: `${SITE_URL}/camp`,
-    })),
-    // Lunch is an optional extra of LUNCH_PER_DAY_KES per day.
-    additionalProperty: {
-      "@type": "PropertyValue",
-      name: "Optional lunch (per day)",
-      value: LUNCH_PER_DAY_KES,
-      unitText: "KES",
-    },
+    ...(closed
+      ? {}
+      : {
+          offers: [
+            ...CAMP_PROGRAMS.map((p) => ({
+              "@type": "Offer",
+              name: `${p.label} (${p.hours}), per week`,
+              price: p.priceKes,
+              priceCurrency: "KES",
+              availability: "https://schema.org/InStock",
+              url: `${SITE_URL}/camp`,
+            })),
+            {
+              "@type": "Offer",
+              name: "Optional lunch, per day",
+              price: LUNCH_PER_DAY_KES,
+              priceCurrency: "KES",
+              availability: "https://schema.org/InStock",
+              url: `${SITE_URL}/camp`,
+            },
+          ],
+        }),
   };
 }
 

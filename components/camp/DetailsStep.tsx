@@ -1,6 +1,7 @@
 "use client";
 
 import type { RefObject } from "react";
+import Link from "next/link";
 import { ArrowRight, Check } from "lucide-react";
 import { Field } from "@/components/Field";
 import { CAMP_TERMS, normalizePhoneInput } from "@/lib/camp";
@@ -40,8 +41,18 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
       >
         Tell us about your family
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-[#121e34]/65">
-        We&rsquo;ll send the M-Pesa prompt and your confirmation to these details.
+      <p className="mt-2 text-sm leading-relaxed text-[#121e34]/70">
+        We&rsquo;ll send the M-Pesa prompt and a confirmation SMS to your phone, and use your email to contact you
+        about the camp. Read how we{" "}
+        <Link
+          href="/privacy"
+          target="_blank"
+          rel="noopener"
+          className="font-semibold text-[#1f4b50] underline underline-offset-2 hover:text-[#121e34]"
+        >
+          use your details
+        </Link>
+        <span className="sr-only"> (opens in a new tab)</span>.
       </p>
 
       <div className="mt-7 grid gap-x-5 sm:grid-cols-2">
@@ -87,14 +98,14 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
             placeholder="7XXXXXXXX"
             error={errors.phone}
           />
-          <p className="-mt-3 mb-5 ml-1 text-xs text-[#121e34]/55">
+          <p className="-mt-3 mb-5 ml-1 text-xs text-[#121e34]/70">
             The payment prompt will be sent to this number.
           </p>
         </div>
       </div>
 
       <section aria-labelledby="camp-terms-title" className="mt-2">
-        <h3 id="camp-terms-title" className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#121e34]/70">
+        <h3 id="camp-terms-title" className="text-xs font-bold uppercase tracking-[0.14em] text-[#121e34]/70">
           Terms &amp; conditions
         </h3>
 
@@ -108,7 +119,7 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
             data-lenis-prevent
             className="max-h-56 overflow-y-auto overscroll-contain rounded-2xl border border-[#121e34]/10 bg-[#f8f5f2] p-4 text-[13px] leading-relaxed text-[#121e34]/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50]"
           >
-            <ol className="space-y-3.5">
+            <ol className="space-y-3.5 [overflow-wrap:anywhere]">
               {CAMP_TERMS.map((t, i) => (
                 <li key={t.title}>
                   <p className="font-semibold text-[#121e34]">
@@ -127,7 +138,7 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
 
         <label
           className={`relative mt-4 flex cursor-pointer items-start gap-3 rounded-2xl border p-4 transition-colors has-focus-visible:ring-2 has-focus-visible:ring-[#1f4b50] has-focus-visible:ring-offset-2 ${
-            errors.acceptedTerms ? "border-red-400 bg-red-50/60" : "border-[#121e34]/10 bg-white hover:border-[#88b03f]/60"
+            errors.acceptedTerms ? "border-red-500 bg-red-50/60" : "border-[#121e34]/10 bg-white hover:border-[#88b03f]/60"
           }`}
         >
           <input
@@ -142,18 +153,19 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
           />
           <span
             aria-hidden="true"
-            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 border-[#1f4b50]/40 bg-white text-white transition-colors peer-checked:border-[#88b03f] peer-checked:bg-[#88b03f] [&>svg]:scale-50 [&>svg]:opacity-0 [&>svg]:transition peer-checked:[&>svg]:scale-100 peer-checked:[&>svg]:opacity-100"
+            className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 border-[#1f4b50]/60 bg-white text-white transition-colors peer-checked:border-[#1f4b50] peer-checked:bg-[#1f4b50] [&>svg]:scale-50 [&>svg]:opacity-0 [&>svg]:transition peer-checked:[&>svg]:scale-100 peer-checked:[&>svg]:opacity-100"
           >
             <Check className="h-3.5 w-3.5" strokeWidth={3.5} />
           </span>
           <span className="text-[13px] leading-snug text-[#121e34]/85">
-            I have read and agree to the terms and conditions above, including that K-Arena is{" "}
+            I am this child&rsquo;s parent or guardian. I have read and agree to the terms and conditions above,
+            including that K-Arena is{" "}
             <strong className="font-semibold text-[#121e34]">not responsible if my child is hurt or hurts themselves</strong>{" "}
-            while playing.
+            (clauses 1 and 2).
           </span>
         </label>
         {errors.acceptedTerms && (
-          <p id="camp-terms-error" role="alert" className="mt-2 ml-1 text-[12px] font-medium text-red-500">
+          <p id="camp-terms-error" role="alert" className="mt-2 ml-1 text-[12px] font-medium text-red-700">
             {errors.acceptedTerms}
           </p>
         )}
@@ -162,10 +174,10 @@ export default function DetailsStep({ values, errors, onChange, onNext, headingR
       <div className="mt-8 flex justify-end">
         <button
           type="submit"
-          className="group inline-flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#88b03f] pl-7 pr-2.5 text-[14px] font-semibold text-white shadow-md transition-all duration-300 hover:bg-[#769a35] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto sm:min-w-56"
+          className="group inline-flex h-12 w-full items-center justify-center gap-3 rounded-full bg-[#88b03f] pl-7 pr-2.5 text-[14px] font-bold text-[#121e34] shadow-md transition-all duration-300 hover:bg-[#769a35] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 active:scale-[0.98] sm:w-auto sm:min-w-56"
         >
           Continue
-          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#88b03f] transition-transform duration-300 group-hover:translate-x-0.5">
+          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-[#121e34] transition-transform duration-300 group-hover:translate-x-0.5">
             <ArrowRight className="h-4 w-4" aria-hidden="true" />
           </span>
         </button>

@@ -24,11 +24,15 @@ export function pageMetadata({
       siteName: SITE_NAME,
       title: fullTitle,
       description,
+      // A page's own openGraph replaces the one inherited from the layout,
+      // image included, so the shared card image is named here.
+      images: ["/opengraph-image"],
     },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
+      images: ["/twitter-image"],
     },
   };
 }

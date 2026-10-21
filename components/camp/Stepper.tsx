@@ -23,15 +23,17 @@ export default function Stepper({ step }: { step: 1 | 2 }) {
                   ? "bg-[#88b03f] text-white"
                   : active
                     ? "bg-[#1f4b50] text-white shadow-[0_6px_16px_-4px_rgba(31,75,80,0.55)]"
-                    : "border-2 border-[#121e34]/15 text-[#121e34]/40"
+                    : "border-2 border-[#121e34]/30 text-[#121e34]/65"
               }`}
             >
               {done ? <Check className="h-4 w-4" strokeWidth={3} aria-hidden="true" /> : s.n}
               <span className="sr-only">{done ? " (completed)" : ""}</span>
             </span>
             <span
+              // On the narrowest phones only the current step keeps its label on
+              // screen, so the labels never wrap and squeeze out the connector.
               className={`text-[13px] font-semibold leading-tight transition-colors sm:text-sm ${
-                active || done ? "text-[#121e34]" : "text-[#121e34]/45"
+                active || done ? "text-[#121e34]" : "text-[#121e34]/65 max-[399px]:sr-only"
               }`}
             >
               {s.label}

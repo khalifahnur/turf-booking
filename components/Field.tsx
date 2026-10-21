@@ -49,11 +49,10 @@ export function Field({
       </label>
       
       <div 
-        className="relative flex items-center rounded-xl overflow-hidden transition-all duration-300"
+        // The input draws no outline of its own, so the box shows focus instead.
+        className="relative flex items-center rounded-xl overflow-hidden border border-black/10 shadow-[0_2px_5px_rgba(0,0,0,0.02)] transition-all duration-300 focus-within:border-[#1f4b50] focus-within:ring-2 focus-within:ring-[#1f4b50]/30"
         style={{
           backgroundColor: "#ffffff",
-          border: `1px solid rgba(0,0,0,0.1)`,
-          boxShadow: "0 2px 5px rgba(0,0,0,0.02)",
           fontFamily: font,
           fontSize: 14,
           opacity: disabled ? 0.6 : 1,
@@ -88,7 +87,7 @@ export function Field({
             onChange(val);
           }}
           placeholder={placeholder}
-          className={`block w-full text-[14px] h-12 outline-none transition-colors ${
+          className={`block w-full text-[14px] h-12 outline-none transition-colors placeholder:text-[#6b7280] ${
             prefix ? "pl-3" : "pl-4"
           } pr-4`}
           style={{
@@ -104,7 +103,7 @@ export function Field({
       </div>
       
       {error && (
-        <span id={errorId} role="alert" className="text-red-500 text-[12px] font-medium mt-1.5 ml-1 block">
+        <span id={errorId} role="alert" className="text-red-700 text-[12px] font-medium mt-1.5 ml-1 block">
           {error}
         </span>
       )}

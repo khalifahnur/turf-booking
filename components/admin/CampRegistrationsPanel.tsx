@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchCampRegistrationsAdmin } from "@/lib/api";
-import { BRAND, KSH } from "@/lib/booking";
-import { CAMP_WEEKS, formatPhone, type CampRegistrationRecord } from "@/lib/camp";
+import { BRAND } from "@/lib/booking";
+import { CAMP_WEEKS, formatKes, formatPhone, type CampRegistrationRecord } from "@/lib/camp";
 
 type StatusFilter = "Paid" | "Pending" | "all";
 
@@ -36,7 +36,7 @@ function csvPhone(raw: string): string {
 }
 
 function toCsv(rows: CampRegistrationRecord[]): string {
-  const header = ["Child", "Parent / guardian", "Phone", "Email", "Programme", "Lunch", "Weeks", "Amount (KES)", "Status", "Paid at", "Registered at"];
+  const header = ["Child", "Parent / guardian", "Phone", "Email", "Programme", "Lunch", "Weeks", "Amount (KES)", "Status", "Paid at", "Registered at", "Paid twice"];
   const lines = rows.map((r) =>
     [
       r.childName,
@@ -50,6 +50,7 @@ function toCsv(rows: CampRegistrationRecord[]): string {
       r.status,
       r.paidAt ?? "",
       r.createdAt,
+      r.duplicate ? "Yes" : "",
     ]
       .map(csvCell)
       .join(","),
@@ -72,11 +73,11 @@ function downloadCsv(rows: CampRegistrationRecord[]) {
 function Stat({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: string }) {
   return (
     <div className="flex flex-col gap-1 border-r border-b border-[#121e34]/10 px-6 py-5 last:border-r-0 sm:border-b-0">
-      <span className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70">{label}</span>
+      <span className="text-xs font-bold uppercase tracking-[0.14em] text-[#1f4b50]/80">{label}</span>
       <span className="text-2xl font-extrabold leading-none tracking-tight" style={{ color: accent ?? "#121e34" }}>
         {value}
       </span>
-      {sub && <span className="text-[11px] font-medium text-[#1f4b50]/60">{sub}</span>}
+      {sub && <span className="text-xs font-medium text-[#1f4b50]/80">{sub}</span>}
     </div>
   );
 }
@@ -93,8 +94,11 @@ export default function CampRegistrationsPanel() {
     refetchInterval: 15_000,
   });
   const records = useMemo(() => (Array.isArray(data) ? data : []), [data]);
+  // When the list could not be loaded the totals are unknown, not zero.
+  const unknown = isError && !Array.isArray(data);
 
   const paid = useMemo(() => records.filter((r) => r.status === "Paid"), [records]);
+  const paidTwice = useMemo(() => paid.filter((r) => r.duplicate), [paid]);
 
   const stats = useMemo(() => {
     const children = new Set(paid.map((r) => `${r.childName.toLowerCase()}|${r.phoneNumber}`));
@@ -147,7 +151,7 @@ export default function CampRegistrationsPanel() {
       <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight text-[#121e34]">Holiday camp</h1>
-          <p className="mt-1 text-sm font-medium text-[#1f4b50]/70">
+          <p className="mt-1 text-sm font-medium text-[#1f4b50]/80">
             Registrations and payments{updatedLabel && <> · Updated {updatedLabel}</>}
           </p>
         </div>
@@ -155,7 +159,7 @@ export default function CampRegistrationsPanel() {
           type="button"
           onClick={() => downloadCsv(rows)}
           disabled={rows.length === 0}
-          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#88b03f] px-4 py-2.5 text-[13px] font-bold text-white shadow-sm transition-colors hover:bg-[#769a35] disabled:cursor-not-allowed disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#88b03f] px-4 py-2.5 text-[13px] font-bold text-[#121e34] shadow-sm transition-colors hover:bg-[#769a35] disabled:cursor-not-allowed disabled:bg-[#e7e5e4] disabled:text-[#57534e]"
         >
           <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" />
@@ -170,15 +174,22 @@ export default function CampRegistrationsPanel() {
         </p>
       )}
 
+      {paidTwice.length > 0 && (
+        <p role="status" className="mb-6 rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+          {paidTwice.length} paid {paidTwice.length === 1 ? "registration shares" : "registrations share"} a week with another
+          payment for the same child (marked &ldquo;Paid twice&rdquo; below). One payment in each pair probably needs refunding.
+        </p>
+      )}
+
       <div className="mb-8 grid grid-cols-2 overflow-hidden rounded-2xl border border-[#121e34]/10 bg-white shadow-sm sm:grid-cols-4">
-        <Stat label="Paid" value={stats.registrations} sub="registrations" accent="#00a64F" />
-        <Stat label="Children" value={stats.children} sub="with a paid place" />
-        <Stat label="Collected" value={KSH(stats.revenue)} sub="from paid registrations" />
-        <Stat label="Awaiting" value={stats.pending} sub="M-Pesa prompt sent" accent="#d9b300" />
+        <Stat label="Paid" value={unknown ? "–" : stats.registrations} sub="registrations" accent="#007a3a" />
+        <Stat label="Children" value={unknown ? "–" : stats.children} sub="with a paid place" />
+        <Stat label="Collected" value={unknown ? "–" : formatKes(stats.revenue)} sub="from paid registrations" />
+        <Stat label="Awaiting" value={unknown ? "–" : stats.pending} sub="M-Pesa prompt sent" accent="#7a6300" />
       </div>
 
       <section aria-labelledby="camp-headcount" className="mb-8">
-        <h2 id="camp-headcount" className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70">
+        <h2 id="camp-headcount" className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[#1f4b50]/80">
           Headcount by week (paid)
         </h2>
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
@@ -192,19 +203,27 @@ export default function CampRegistrationsPanel() {
                   week === w.start ? "border-[#88b03f] bg-[#88b03f]/10" : "border-[#121e34]/10 bg-white hover:border-[#88b03f]/50"
                 }`}
               >
-                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#1f4b50]/70">Week {w.index}</span>
+                <span className="block text-xs font-bold uppercase tracking-wider text-[#1f4b50]/80">Week {w.index}</span>
                 <span className="block text-[12px] font-semibold text-[#121e34]">{w.label}</span>
-                <span className="mt-2 block text-2xl font-extrabold leading-none tabular-nums text-[#121e34]">{children}</span>
-                <span className="mt-1 block text-[11px] leading-tight text-[#1f4b50]/65">
-                  {fullDay} full · {halfDay} half
-                  <br />
-                  {lunches} lunch{lunches === 1 ? "" : "es"}
+                <span className="mt-2 block text-2xl font-extrabold leading-none tabular-nums text-[#121e34]">
+                  {unknown ? "–" : children}
+                </span>
+                <span className="mt-1 block text-xs leading-tight text-[#1f4b50]/80">
+                  {unknown ? (
+                    "Unavailable"
+                  ) : (
+                    <>
+                      {fullDay} full · {halfDay} half
+                      <br />
+                      {lunches} lunch{lunches === 1 ? "" : "es"}
+                    </>
+                  )}
                 </span>
               </button>
             </li>
           ))}
         </ul>
-        <p className="mt-2 text-[11px] text-[#1f4b50]/55">Select a week to list only its children.</p>
+        <p className="mt-2 text-xs text-[#1f4b50]/80">Select a week to list only its children.</p>
       </section>
 
       <div className="mb-4 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
@@ -217,8 +236,8 @@ export default function CampRegistrationsPanel() {
                 type="button"
                 onClick={() => setStatus(key)}
                 aria-pressed={active}
-                className="rounded-lg px-4 py-1.5 text-[12px] font-bold transition-all"
-                style={{ backgroundColor: active ? "#88b03f" : "transparent", color: active ? "#ffffff" : "#1f4b50" }}
+                className="min-h-9 rounded-lg px-4 py-1.5 text-xs font-bold transition-all"
+                style={{ backgroundColor: active ? "#88b03f" : "transparent", color: active ? "#121e34" : "#1f4b50" }}
               >
                 {label}
               </button>
@@ -248,111 +267,117 @@ export default function CampRegistrationsPanel() {
             placeholder="Search child, parent, phone…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-[#121e34]/10 bg-white px-3.5 py-2.5 text-[13px] font-medium text-[#121e34] shadow-sm placeholder-[#1f4b50]/40 sm:w-64"
+            className="w-full rounded-xl border border-[#121e34]/10 bg-white px-3.5 py-2.5 text-[13px] font-medium text-[#121e34] shadow-sm placeholder-[#6b7280] sm:w-64"
           />
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-[#121e34]/10 bg-white shadow-sm">
-        <div className="overflow-x-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(18,30,52,0.1) transparent" }}>
-          <table className="w-full border-collapse text-left" style={{ minWidth: 960 }}>
-            <caption className="sr-only">Holiday camp registrations</caption>
-            <thead>
-              <tr className="border-b border-[#121e34]/10 bg-[#F8F5F2]">
-                {["Child", "Parent / guardian", "Contact", "Programme", "Weeks", "Amount", "Paid", "Status"].map((h) => (
-                  <th key={h} scope="col" className="px-5 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-16 text-center text-sm font-semibold text-[#1f4b50]/60">
-                    Loading registrations…
-                  </td>
+        {isLoading || unknown || rows.length === 0 ? (
+          // Shown as an ordinary block: inside the wide, scrolling table the
+          // message would sit off-screen on a phone.
+          <p role="status" className="px-6 py-16 text-center text-sm font-semibold text-[#1f4b50]/80">
+            {isLoading
+              ? "Loading registrations…"
+              : unknown
+                ? "Registrations could not be loaded."
+                : records.length === 0
+                  ? "No registrations yet."
+                  : "No registrations match your filters."}
+          </p>
+        ) : (
+          <div className="overflow-x-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(18,30,52,0.1) transparent" }}>
+            <table className="w-full border-collapse text-left" style={{ minWidth: 1000 }}>
+              <caption className="sr-only">Holiday camp registrations</caption>
+              <thead>
+                <tr className="border-b border-[#121e34]/10 bg-[#F8F5F2]">
+                  {["Child", "Parent / guardian", "Contact", "Programme", "Weeks", "Amount", "Paid / sent", "Status"].map((h) => (
+                    <th key={h} scope="col" className="px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[#1f4b50]/80">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
-              ) : rows.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-6 py-16 text-center text-sm font-bold text-[#1f4b50]/60">
-                    {search || week !== "all" || status !== "all" ? "No registrations match your filters." : "No registrations yet."}
-                  </td>
-                </tr>
-              ) : (
-                rows.map((r, idx) => (
+              </thead>
+              <tbody>
+                {rows.map((r, idx) => (
                   <tr
                     key={r.id}
                     className="transition-colors hover:bg-[#F8F5F2]"
                     style={{ borderBottom: idx === rows.length - 1 ? "none" : "1px solid rgba(18,30,52,0.05)" }}
                   >
                     <td className="px-5 py-4">
-                      <span className="block text-[13px] font-bold text-[#121e34]">{r.childName}</span>
+                      <span className="block break-words text-[13px] font-bold text-[#121e34]">{r.childName}</span>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="block text-[13px] font-semibold text-[#121e34]">{r.parentName}</span>
+                      <span className="block break-words text-[13px] font-semibold text-[#121e34]">{r.parentName}</span>
                     </td>
                     <td className="px-5 py-4">
                       <a href={`tel:+${r.phoneNumber}`} className="block font-mono text-[12px] font-semibold text-[#1f4b50] hover:underline">
                         {phoneLabel(r.phoneNumber)}
                       </a>
-                      <span className="block max-w-[200px] truncate text-[11px] text-[#1f4b50]/60">{r.email}</span>
+                      <span className="block max-w-[200px] truncate text-xs text-[#1f4b50]/80">{r.email}</span>
                     </td>
                     <td className="px-5 py-4">
                       <span
-                        className="inline-block rounded-md px-2.5 py-1 text-[11px] font-bold"
+                        className="inline-block rounded-md px-2.5 py-1 text-xs font-bold"
                         style={{
                           backgroundColor: r.program === "fullDay" ? "rgba(31,75,80,0.1)" : "rgba(136,176,63,0.15)",
-                          color: r.program === "fullDay" ? "#1f4b50" : "#5f7f26",
+                          color: r.program === "fullDay" ? "#1f4b50" : "#4d6a1d",
                         }}
                       >
                         {r.programLabel}
                       </span>
                       {r.lunch && (
-                        <span className="ml-1.5 inline-block rounded-md bg-[#fed107]/25 px-2 py-1 text-[11px] font-bold text-[#8a6d00]">
+                        <span className="ml-1.5 inline-block rounded-md bg-[#fed107]/25 px-2 py-1 text-xs font-bold text-[#6f5700]">
                           + lunch
                         </span>
                       )}
                     </td>
                     <td className="px-5 py-4">
-                      <div className="flex max-w-[210px] flex-wrap gap-1">
-                        {r.weeks.map((w) => (
-                          <span
-                            key={w}
-                            title={weekIndex.get(w)?.label ?? w}
-                            className="rounded bg-[#1f4b50]/8 px-1.5 py-0.5 text-[11px] font-bold text-[#1f4b50]"
-                          >
-                            W{weekIndex.get(w)?.index ?? "?"}
-                          </span>
-                        ))}
+                      <div className="flex max-w-[230px] flex-wrap gap-1">
+                        {r.weeks.map((w) => {
+                          const info = weekIndex.get(w);
+                          return (
+                            <span key={w} className="rounded bg-[#1f4b50]/8 px-1.5 py-0.5 text-xs font-bold text-[#1f4b50]">
+                              {info ? `W${info.index} · ${info.label}` : w}
+                            </span>
+                          );
+                        })}
                       </div>
                     </td>
-                    <td className="whitespace-nowrap px-5 py-4 text-[13px] font-bold tabular-nums text-[#121e34]">{KSH(r.amount)}</td>
-                    <td className="whitespace-nowrap px-5 py-4 text-[12px] font-medium text-[#1f4b50]/80">{when(r.paidAt)}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-[13px] font-bold tabular-nums text-[#121e34]">{formatKes(r.amount)}</td>
+                    <td className="whitespace-nowrap px-5 py-4 text-xs font-medium text-[#1f4b50]/90">
+                      {r.paidAt ? when(r.paidAt) : <>Sent {when(r.createdAt)}</>}
+                    </td>
                     <td className="px-5 py-4">
                       <span
-                        className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-[11px] font-bold ${
+                        className={`inline-flex items-center gap-2 rounded-full border px-2.5 py-1 text-xs font-bold ${
                           r.status === "Paid"
-                            ? "border-[#00a64F]/20 bg-[#00a64F]/10 text-[#00a64F]"
-                            : "border-[#fed107]/30 bg-[#fed107]/10 text-[#b09100]"
+                            ? "border-[#007a3a]/25 bg-[#00a64F]/10 text-[#007a3a]"
+                            : "border-[#7a6300]/25 bg-[#fed107]/10 text-[#7a6300]"
                         }`}
                       >
-                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${r.status === "Paid" ? "bg-[#00a64F]" : "bg-[#fed107]"}`} />
+                        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${r.status === "Paid" ? "bg-[#007a3a]" : "bg-[#7a6300]"}`} />
                         {r.status === "Paid" ? "Paid" : "Awaiting"}
                       </span>
+                      {r.duplicate && (
+                        <span className="mt-1.5 block w-fit rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-900">
+                          Paid twice
+                        </span>
+                      )}
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-        {!isLoading && rows.length > 0 && (
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {!isLoading && !unknown && rows.length > 0 && (
           <div className="flex items-center justify-between border-t border-[#121e34]/10 bg-[#F8F5F2] px-6 py-3.5">
-            <span className="text-[11px] font-bold text-[#1f4b50]/60">
+            <span className="text-xs font-bold text-[#1f4b50]/80">
               {rows.length === records.length ? `${rows.length} registrations` : `${rows.length} of ${records.length} registrations`}
             </span>
-            <span className="text-[11px] font-semibold text-[#1f4b50]/50">Auto-refreshes every 15s</span>
+            <span className="text-xs font-semibold text-[#1f4b50]/80">Auto-refreshes every 15s</span>
           </div>
         )}
       </div>

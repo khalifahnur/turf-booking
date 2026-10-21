@@ -1,3 +1,5 @@
+import { EMAIL } from "@/lib/site";
+
 // Holiday camp: dates, prices, wording. The booking API enforces the same rules
 // and works out every amount itself, so this file can only ever be out of date,
 // never be used to change what someone is charged.
@@ -8,7 +10,7 @@
  * the wording that was actually shown. Change it together with CAMP_TERMS and
  * with TermsVersion in the Go API (internal/camp/camp.go).
  */
-export const CAMP_TERMS_VERSION = "camp-2026-v1";
+export const CAMP_TERMS_VERSION = "camp-2026-v2";
 
 export const CAMP_NAME = "Holiday Football Camp";
 export const CAMP_FIRST_DAY = "2026-11-02"; // a Monday
@@ -32,6 +34,12 @@ export const CAMP_PROGRAMS: CampProgram[] = [
 export const LUNCH_PER_DAY_KES = 100;
 export const CAMP_DAYS_PER_WEEK = 5;
 export const LUNCH_PER_WEEK_KES = LUNCH_PER_DAY_KES * CAMP_DAYS_PER_WEEK;
+
+/** "Ksh 3,000": the one way money is written on the camp page, in its terms and in its SMS. */
+export function formatKes(amount: number): string {
+  const grouped = String(Math.abs(Math.round(amount))).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${amount < 0 ? "-" : ""}Ksh ${grouped}`;
+}
 
 export const WHAT_TO_EXPECT = [
   { icon: "skills", text: "Football skills training" },
@@ -125,6 +133,8 @@ export function quoteCamp(program: CampProgramId | null, lunch: boolean, weekCou
 
 // ---- terms -----------------------------------------------------------------
 
+const programPrices = CAMP_PROGRAMS.map((p) => `${formatKes(p.priceKes)} a week`).join(" and ");
+
 export const CAMP_TERMS: { title: string; body: string }[] = [
   {
     title: "Taking part is at your own risk",
@@ -148,43 +158,63 @@ export const CAMP_TERMS: { title: string; body: string }[] = [
   },
   {
     title: "Fees and changes",
-    body: "Fees are paid in full by M-Pesa when you register, per child and per week selected, and lunch (Ksh 100 per day) is charged for every selected week when added. Refunds and changes are at the discretion of management.",
+    body: `Fees are paid in full by M-Pesa when you register, per child and per week selected (${programPrices}, for the full day and half day respectively). Lunch is ${formatKes(LUNCH_PER_DAY_KES)} a day, charged for all ${CAMP_DAYS_PER_WEEK} days of every selected week (${formatKes(LUNCH_PER_WEEK_KES)} a week). If a payment is confirmed late, after the M-Pesa prompt has timed out, we still honour it and register your child. Refunds and changes are at the discretion of management.`,
   },
   {
     title: "Photos and videos",
-    body: "We may take photos and videos at camp to share on K-Arena's channels. If you would rather your child is not included, email us before camp starts.",
+    body: `We may take photos and videos at camp to share on K-Arena's channels. If you would rather your child is not included, email ${EMAIL} before camp starts.`,
   },
   {
     title: "Your details",
-    body: "We use the details you give here only to run the camp, take payment and contact you about it.",
+    body: "We keep the details you give here (your child's name, your name, email and phone number) to run the camp, take payment and contact you about it. Your phone number and email go to Paystack to process the M-Pesa payment, and your phone number to our SMS provider to send your confirmation. We do not sell them. Details of registrations that are never paid for are deleted after about a week. See our Privacy Policy for more.",
   },
 ];
 
 // ---- form validation (the server repeats every one of these checks) ----------
 
-const NAME_PATTERN = /^[\p{L}\p{M}\p{N} '.&-]+$/u;
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const NAME_PATTERN = /^[\p{L}\p{M}\p{Nd} '.&-]+$/u;
+// Letters that draw as blank space, which would let a name that looks empty through.
+const INVISIBLE_FILLER = /[\u115F\u1160\u3164\uFFA0\u17B4\u17B5]/u;
+// The same plain address the server accepts: dot-separated words, no leading,
+// trailing or doubled dots, and a domain with at least one dot.
+const ATEXT = "[\\p{L}\\p{N}!#$%&'*+/=?^_`{|}~-]+";
+const EMAIL_PATTERN = new RegExp(
+  `^${ATEXT}(?:\\.${ATEXT})*@[\\p{L}\\p{N}-]+(?:\\.[\\p{L}\\p{N}-]+)+$`,
+  "u",
+);
 const PHONE_PATTERN = /^[17]\d{8}$/;
 
+/** Tidies a name the way the server does: curly apostrophes, composed characters, single spaces. */
 export function cleanName(raw: string): string {
-  return raw.trim().replace(/\s+/g, " ");
+  return raw
+    .replace(/[\u2018\u2019\u02BC\u0060\u00B4]/g, "'")
+    .normalize("NFC")
+    .trim()
+    .replace(/\s+/g, " ");
 }
 
 export function nameError(raw: string, who: "child" | "parent"): string | undefined {
   const name = cleanName(raw);
   const subject = who === "child" ? "child's" : "parent or guardian's";
   if (!name) return `Enter the ${subject} full name`;
-  if (name.length < 2 || name.length > 60) return "Use between 2 and 60 characters";
-  if (!NAME_PATTERN.test(name)) return "Use letters, numbers and spaces only";
+  const length = [...name].length;
+  if (length < 2 || length > 60) return "Use between 2 and 60 characters";
+  if (!NAME_PATTERN.test(name) || INVISIBLE_FILLER.test(name) || /\p{M}{3,}/u.test(name)) {
+    return "Use letters, numbers, spaces and the characters . - & ' only";
+  }
+  if ((name.match(/[\p{L}\p{Nd}]/gu) ?? []).length < 2) return "Include at least two letters or numbers";
   return undefined;
 }
 
 export function emailError(raw: string): string | undefined {
   const email = raw.trim();
   if (!email) return "Enter an email address";
-  if (email.length > 254 || !EMAIL_PATTERN.test(email)) return "Enter a valid email address";
+  if (email.length > 254 || !EMAIL_PATTERN.test(email)) return "Enter a valid email address, like parent@example.com";
   return undefined;
 }
+
+/** Server refusals about something typed on step 1, which the parent has to go back and fix. */
+export const DETAILS_PROBLEM = /^(child's|parent's|a valid email|enter a valid kenyan)/i;
 
 export function phoneError(digits: string): string | undefined {
   if (!digits) return "Enter the M-Pesa number to charge";
@@ -238,4 +268,6 @@ export interface CampRegistrationRecord {
   paidAt: string | null;
   createdAt: string;
   termsVersion: string;
+  /** Paid more than once for the same week: one payment needs refunding. */
+  duplicate?: boolean;
 }

@@ -240,6 +240,11 @@ function LoginScreen({
   );
 }
 
+const TABS = [
+  ["bookings", "Pitch bookings"],
+  ["camp", "Holiday camp"],
+] as const;
+
 export default function AdminDashboard() {
   const { font } = BRAND;
   const { data: session, status } = useSession();
@@ -414,20 +419,34 @@ export default function AdminDashboard() {
           role="tablist"
           aria-label="Dashboard sections"
           className="mb-8 inline-flex items-center gap-1.5 rounded-xl border border-[#121e34]/10 bg-white p-1 shadow-sm"
+          onKeyDown={(e) => {
+            // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern.
+            const keys = TABS.map(([key]) => key);
+            const at = keys.indexOf(tab);
+            const next =
+              e.key === "ArrowRight" ? keys[(at + 1) % keys.length]
+              : e.key === "ArrowLeft" ? keys[(at - 1 + keys.length) % keys.length]
+              : e.key === "Home" ? keys[0]
+              : e.key === "End" ? keys[keys.length - 1]
+              : null;
+            if (!next) return;
+            e.preventDefault();
+            setTab(next);
+            document.getElementById(`tab-${next}`)?.focus();
+          }}
         >
-          {([
-            ["bookings", "Pitch bookings"],
-            ["camp", "Holiday camp"],
-          ] as const).map(([key, label]) => (
+          {TABS.map(([key, label]) => (
             <button
               key={key}
               type="button"
               role="tab"
               id={`tab-${key}`}
               aria-selected={tab === key}
-              aria-controls={`panel-${key}`}
+              // Only the open panel is in the page, so only its tab can point at it.
+              aria-controls={tab === key ? `panel-${key}` : undefined}
+              tabIndex={tab === key ? 0 : -1}
               onClick={() => setTab(key)}
-              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all"
+              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-1"
               style={{
                 backgroundColor: tab === key ? "#1f4b50" : "transparent",
                 color: tab === key ? "#ffffff" : "#1f4b50",
