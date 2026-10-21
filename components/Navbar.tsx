@@ -12,10 +12,6 @@ interface NavbarProps {
 
 export default function Navbar({ brandLogo }: NavbarProps) {
   return (
-    // right-scroll-bar-position: while the booking sheet is open the page's
-    // scrollbar disappears and the viewport widens. Radix pads the body to
-    // compensate but cannot reach fixed elements, so without this class the
-    // navbar would jump sideways just as the sheet starts sliding in.
     <header className="site-nav right-scroll-bar-position font-playfair fixed top-4 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
       <nav
         className="pointer-events-auto flex items-center justify-between w-full max-w-4xl px-4 py-3
@@ -43,19 +39,6 @@ export default function Navbar({ brandLogo }: NavbarProps) {
         </div>
 
         <div className="flex items-center gap-3 sm:gap-4">
-          <a
-            href={TRYOUTS_HREF}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group relative flex items-center gap-2 px-4 sm:px-5 py-2.5 bg-[#f8f5f2]
-                       text-black text-[13px] font-semibold rounded-full transition-all duration-300
-                       shadow-md 
-                       focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#88b03f] focus-visible:ring-offset-2"
-          >
-            <span>Register Tryouts</span>
-           
-          </a>
-
           <DirectionsCall />
         </div>
       </nav>
@@ -63,25 +46,11 @@ export default function Navbar({ brandLogo }: NavbarProps) {
   );
 }
 
-/**
- * Directions and Call as one gooey, figure-8 shaped control.
- *
- * The two coloured circles live in a layer that an SVG "goo" filter blurs and
- * then thresholds, which is what fuses them into a single droplet with a
- * bridging neck (and blends the two colours across it). The links, icons and
- * labels sit in a separate layer on top, so they stay crisp and clickable. On
- * hover the lobes pull apart and the neck thins out like a stretching droplet.
- * Without filter support you simply get two touching circles.
- */
 function DirectionsCall() {
   return (
     <div className="goo-pair">
       <svg width="0" height="0" className="absolute" aria-hidden="true" focusable="false">
         <defs>
-          {/* Blur, then snap the alpha to a hard edge: the blurred overlap becomes
-              a solid neck whose colour blends from teal to lime. Deliberately no
-              feComposite of the sharp originals on top, which would redraw each
-              circle's edge inside the overlap and undo the merge. */}
           <filter id="nav-goo" x="-30%" y="-60%" width="160%" height="220%" colorInterpolationFilters="sRGB">
             <feGaussianBlur in="SourceGraphic" stdDeviation="7" />
             <feColorMatrix
