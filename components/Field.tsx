@@ -1,7 +1,7 @@
 "use client";
 
 import { BRAND } from "@/lib/booking";
-import React from "react";
+import React, { useId } from "react";
 
 interface FieldProps {
   label: string;
@@ -14,6 +14,9 @@ interface FieldProps {
   prefix?: string;
   error?: string;
   maxLength?: number;
+  name?: string;
+  autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
 }
 
 export function Field({
@@ -27,12 +30,18 @@ export function Field({
   prefix,
   error,
   maxLength,
+  name,
+  autoComplete,
+  inputMode,
 }: FieldProps) {
   const { font } = BRAND;
+  const id = useId();
+  const errorId = `${id}-error`;
   
   return (
     <div className="mb-5 relative">
       <label
+        htmlFor={id}
         className="block text-[11px] font-semibold uppercase tracking-widest mb-1.5 ml-1"
         style={{ color: "#2c2825", opacity: 0.7, fontFamily: font }}
       >
@@ -40,11 +49,11 @@ export function Field({
       </label>
       
       <div 
-        className="relative flex items-center rounded-xl overflow-hidden transition-all duration-300"
+        // The input draws no outline of its own, so the box shows focus instead: a ring,
+        // plus a transparent outline that forced-colors (high contrast) mode paints.
+        className="relative flex items-center rounded-xl overflow-hidden border border-black/10 shadow-[0_2px_5px_rgba(0,0,0,0.02)] transition-all duration-300 focus-within:border-[#1f4b50] focus-within:ring-2 focus-within:ring-[#1f4b50]/30 focus-within:outline-2 focus-within:outline-transparent"
         style={{
           backgroundColor: "#ffffff",
-          border: `1px solid rgba(0,0,0,0.1)`,
-          boxShadow: "0 2px 5px rgba(0,0,0,0.02)",
           fontFamily: font,
           fontSize: 14,
           opacity: disabled ? 0.6 : 1,
@@ -62,6 +71,12 @@ export function Field({
         )}
         
         <input
+          id={id}
+          name={name}
+          autoComplete={autoComplete}
+          inputMode={inputMode ?? (type === "tel" ? "numeric" : undefined)}
+          aria-invalid={error ? true : undefined}
+          aria-describedby={error ? errorId : undefined}
           required={required}
           type={type}
           value={value}
@@ -73,7 +88,7 @@ export function Field({
             onChange(val);
           }}
           placeholder={placeholder}
-          className={`block w-full text-[14px] h-12 outline-none transition-colors ${
+          className={`block w-full text-[14px] h-12 outline-none transition-colors placeholder:text-[#6b7280] ${
             prefix ? "pl-3" : "pl-4"
           } pr-4`}
           style={{
@@ -89,7 +104,7 @@ export function Field({
       </div>
       
       {error && (
-        <span className="text-red-500 text-[12px] font-medium mt-1.5 ml-1 block">
+        <span id={errorId} role="alert" className="text-red-700 text-[12px] font-medium mt-1.5 ml-1 block">
           {error}
         </span>
       )}

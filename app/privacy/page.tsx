@@ -5,7 +5,7 @@ import { pageMetadata } from "@/lib/seo";
 
 export const metadata = pageMetadata({
   title: "Privacy Policy",
-  description: "How K-Arena collects, uses and protects your personal information when you book a pitch.",
+  description: "How K-Arena collects, uses and protects your personal information when you book a pitch or register a child for the holiday camp.",
   path: "/privacy",
 });
 
@@ -32,12 +32,16 @@ export default function PrivacyPage() {
             <p>
               We may collect personal data such as your name, email address, phone number, and payment details when you book a pitch or interact with our platform. This information is strictly used for the provision of our services.
             </p>
+            <p className="mt-3">
+              When you register a child for the holiday football camp we also collect the child&rsquo;s name, your name as parent or guardian, your email address and your M-Pesa phone number, together with a record of the camp terms you accepted (the version and the time). We ask for a child&rsquo;s name only to register them for the camp, and only a parent or guardian should do so.
+            </p>
           </section>
 
           <section>
             <h2 className="text-2xl font-playfair font-semibold mb-4 text-[#2d2926]">3. How We Use Your Information</h2>
             <ul className="list-disc pl-5 space-y-2">
-              <li>To process and manage your bookings.</li>
+              <li>To process and manage your bookings and camp registrations.</li>
+              <li>To send you a confirmation SMS and contact you about your booking or the camp.</li>
               <li>To communicate with you regarding your reservations.</li>
               <li>To improve our website and services based on user feedback.</li>
               <li>To comply with legal obligations.</li>
@@ -47,7 +51,10 @@ export default function PrivacyPage() {
           <section>
             <h2 className="text-2xl font-playfair font-semibold mb-4 text-[#2d2926]">4. Data Protection</h2>
             <p>
-              We implement reasonable security measures to protect your personal data from unauthorized access, alteration, disclosure, or destruction. We do not sell or share your information with third parties without your explicit consent, except as required by law.
+              We implement reasonable security measures to protect your personal data from unauthorized access, alteration, disclosure, or destruction. We do not sell or share your information with third parties without your explicit consent, except as required by law. We do share what is needed with the services that help us run ours: Paystack processes M-Pesa payments (it receives your phone number, email and the amount) and Africa&rsquo;s Talking sends our confirmation SMS messages (it receives your phone number and the message).
+            </p>
+            <p className="mt-3">
+              Camp registrations that are started but never paid for are deleted after about a week. Registrations that are paid are kept so we can run the camp and answer questions about it. To ask us to correct or delete your or your child&rsquo;s details, contact us using the details on our website.
             </p>
           </section>
 

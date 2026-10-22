@@ -7,6 +7,7 @@ import { fetchBookings, fetchBookingsAdmin } from "@/lib/api";
 import { BRAND } from "@/lib/booking";
 import Link from "next/link";
 import Image from "next/image";
+import CampRegistrationsPanel from "@/components/admin/CampRegistrationsPanel";
 
 function formatDate(raw: string) {
   try {
@@ -239,6 +240,11 @@ function LoginScreen({
   );
 }
 
+const TABS = [
+  ["bookings", "Pitch bookings"],
+  ["camp", "Holiday camp"],
+] as const;
+
 export default function AdminDashboard() {
   const { font } = BRAND;
   const { data: session, status } = useSession();
@@ -248,6 +254,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "Confirmed" | "Pending" | "Failed"
   >("all");
+  const [tab, setTab] = useState<"bookings" | "camp">("bookings");
 
   const {
     data: bookings = [],
@@ -408,6 +415,56 @@ export default function AdminDashboard() {
       </header>
 
       <main className="max-w-[1320px] mx-auto px-6 sm:px-8 py-8">
+        <div
+          role="tablist"
+          aria-label="Dashboard sections"
+          className="mb-8 inline-flex items-center gap-1.5 rounded-xl border border-[#121e34]/10 bg-white p-1 shadow-sm"
+          onKeyDown={(e) => {
+            // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern.
+            // With a modifier held they belong to the browser (Alt+Left is Back).
+            if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+            const keys = TABS.map(([key]) => key);
+            const at = keys.indexOf(tab);
+            const next =
+              e.key === "ArrowRight" ? keys[(at + 1) % keys.length]
+              : e.key === "ArrowLeft" ? keys[(at - 1 + keys.length) % keys.length]
+              : e.key === "Home" ? keys[0]
+              : e.key === "End" ? keys[keys.length - 1]
+              : null;
+            if (!next) return;
+            e.preventDefault();
+            setTab(next);
+            document.getElementById(`tab-${next}`)?.focus();
+          }}
+        >
+          {TABS.map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              role="tab"
+              id={`tab-${key}`}
+              aria-selected={tab === key}
+              // Only the open panel is in the page, so only its tab can point at it.
+              aria-controls={tab === key ? `panel-${key}` : undefined}
+              tabIndex={tab === key ? 0 : -1}
+              onClick={() => setTab(key)}
+              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-1"
+              style={{
+                backgroundColor: tab === key ? "#1f4b50" : "transparent",
+                color: tab === key ? "#ffffff" : "#1f4b50",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "camp" ? (
+          <div role="tabpanel" id="panel-camp" aria-labelledby="tab-camp">
+            <CampRegistrationsPanel />
+          </div>
+        ) : (
+          <div role="tabpanel" id="panel-bookings" aria-labelledby="tab-bookings">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
           <div>
             <h1 className="text-[1.75rem] font-extrabold tracking-tight leading-tight text-[#121e34]">
@@ -617,6 +674,8 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
+          </div>
+        )}
       </main>
     </div>
   );

@@ -90,13 +90,16 @@ export default function FooterSection() {
               Facilities
             </h4>
             <ul className="space-y-3">
-              {["Football Pitch"].map((link) => (
-                <li key={link}>
+              {[
+                { label: "Football Pitch", href: "#" },
+                { label: "Holiday Camp", href: "/camp" },
+              ].map((link) => (
+                <li key={link.label}>
                   <a
-                    href="#"
+                    href={link.href}
                     className="font-playfair text-white/48 text-sm hover:text-white transition-colors"
                   >
-                    {link}
+                    {link.label}
                   </a>
                 </li>
               ))}
