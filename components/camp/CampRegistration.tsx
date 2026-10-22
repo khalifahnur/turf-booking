@@ -27,11 +27,6 @@ import Summary from "./Summary";
 
 const EMPTY: DetailsValues = { childName: "", parentName: "", email: "", phone: "", acceptedTerms: false };
 
-/**
- * The two-step registration: (1) the family's details and the terms, then
- * (2) the programme, weeks and lunch, ending in an M-Pesa prompt. `today` comes
- * from the server so the first render matches what the server drew.
- */
 export default function CampRegistration({ today }: { today: string }) {
   const [step, setStep] = useState<1 | 2>(1);
   const [details, setDetails] = useState<DetailsValues>(EMPTY);
@@ -41,9 +36,7 @@ export default function CampRegistration({ today }: { today: string }) {
   const [weeks, setWeeks] = useState<string[]>([]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [reference, setReference] = useState<string | null>(null);
-  // What the server actually charged, which is what the receipt must show.
   const [charged, setCharged] = useState<number | null>(null);
-  // Bumped to bring focus back to the plan heading after a payment screen closes.
   const [focusTick, setFocusTick] = useState(0);
 
   const cardRef = useRef<HTMLDivElement>(null);
@@ -55,8 +48,6 @@ export default function CampRegistration({ today }: { today: string }) {
   const quote = quoteCamp(program, lunch, selectedWeeks.length);
   const phoneLabel = formatPhone(details.phone);
 
-  // After a step change, bring the new step into view and focus its heading so
-  // keyboard and screen-reader users land at the top of it.
   useEffect(() => {
     if (!moveFocus.current) return;
     moveFocus.current = false;
@@ -95,7 +86,6 @@ export default function CampRegistration({ today }: { today: string }) {
     };
     setErrors(found);
     if (Object.values(found).some(Boolean)) {
-      // Take keyboard and screen-reader users to the first thing to fix.
       requestAnimationFrame(() =>
         cardRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus(),
       );
@@ -120,8 +110,6 @@ export default function CampRegistration({ today }: { today: string }) {
     });
   };
 
-  // Siblings are the usual reason to register again, so the parent's details
-  // stay. The terms are ticked afresh: each registration records its own consent.
   const startAgain = () => {
     mutation.reset();
     setDetails((d) => ({ ...EMPTY, parentName: d.parentName, email: d.email, phone: d.phone }));
@@ -146,10 +134,10 @@ export default function CampRegistration({ today }: { today: string }) {
 
   if (openWeeks.length === 0) {
     return (
-      <div className="mx-auto max-w-2xl px-4 sm:px-6">
-        <div className="rounded-[28px] bg-white p-8 text-center shadow-[0_24px_60px_-24px_rgba(18,30,52,0.28)] ring-1 ring-[#121e34]/5">
-          <h2 className="font-playfair text-2xl font-semibold text-[#121e34]">Registration has closed</h2>
-          <p className="mt-3 text-sm leading-relaxed text-[#121e34]/65">
+      <div className="mx-auto max-w-lg px-4">
+        <div className="rounded-xl border border-[#121e34]/10 bg-white p-5 text-center shadow-xs sm:p-6">
+          <h2 className="font-playfair text-lg font-semibold text-[#121e34] sm:text-xl">Registration has closed</h2>
+          <p className="mt-1.5 text-xs leading-relaxed text-[#121e34]/65 sm:text-[13px]">
             This year&rsquo;s camp has finished. Call {PHONE_DISPLAY} to hear about the next one.
           </p>
         </div>
@@ -158,10 +146,10 @@ export default function CampRegistration({ today }: { today: string }) {
   }
 
   return (
-    <div className="mx-auto grid max-w-6xl grid-cols-[minmax(0,1fr)] gap-6 px-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-8 lg:px-8">
+    <div className="mx-auto grid max-w-5xl grid-cols-[minmax(0,1fr)] gap-4 px-3.5 sm:px-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-6">
       <div
         ref={cardRef}
-        className="rounded-[28px] bg-white p-5 shadow-[0_24px_60px_-24px_rgba(18,30,52,0.28)] ring-1 ring-[#121e34]/5 sm:p-8"
+        className="rounded-xl border border-[#121e34]/10 bg-white p-4 shadow-xs sm:rounded-2xl sm:p-6"
       >
         {reference ? (
           <PaymentFlow
@@ -179,7 +167,7 @@ export default function CampRegistration({ today }: { today: string }) {
         ) : (
           <>
             <Stepper step={step} />
-            <div className="mt-8">
+            <div className="mt-5">
               <div aria-live="polite" className="sr-only">
                 {step === 1 ? "Step 1 of 2: your details" : "Step 2 of 2: plan and payment"}
               </div>
@@ -229,20 +217,20 @@ export default function CampRegistration({ today }: { today: string }) {
       </div>
 
       <aside className="hidden lg:block" aria-label="Registration summary">
-        <div className="sticky top-28 space-y-5">
+        <div className="sticky top-24 space-y-3.5">
           <Summary childName={details.childName} program={program} weeks={selectedWeeks} lunch={lunch} quote={quote} />
-          <div className="rounded-3xl border border-[#121e34]/10 bg-white p-5 text-[13px] text-[#121e34]/70 sm:p-6">
-            <p className="font-playfair text-base font-semibold text-[#121e34]">Questions?</p>
-            <p className="mt-1 leading-relaxed">We&rsquo;re happy to help before you register.</p>
-            <ul className="mt-3 space-y-2">
+          <div className="rounded-xl border border-[#121e34]/10 bg-white p-4 text-xs text-[#121e34]/70">
+            <p className="font-playfair text-sm font-semibold text-[#121e34]">Questions?</p>
+            <p className="mt-0.5 leading-relaxed">We&rsquo;re happy to help before you register.</p>
+            <ul className="mt-2.5 space-y-1.5">
               <li>
-                <a href={PHONE_TEL} className="inline-flex items-center gap-2 font-semibold text-[#1f4b50] hover:underline">
-                  <Phone className="h-4 w-4" aria-hidden="true" /> {PHONE_DISPLAY}
+                <a href={PHONE_TEL} className="inline-flex items-center gap-1.5 font-semibold text-[#1f4b50] hover:underline">
+                  <Phone className="h-3.5 w-3.5" aria-hidden="true" /> {PHONE_DISPLAY}
                 </a>
               </li>
               <li>
-                <a href={`mailto:${EMAIL}`} className="inline-flex items-center gap-2 break-all font-semibold text-[#1f4b50] hover:underline">
-                  <Mail className="h-4 w-4 shrink-0" aria-hidden="true" /> {EMAIL}
+                <a href={`mailto:${EMAIL}`} className="inline-flex items-center gap-1.5 break-all font-semibold text-[#1f4b50] hover:underline">
+                  <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {EMAIL}
                 </a>
               </li>
             </ul>

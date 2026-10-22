@@ -31,9 +31,9 @@ export default function Navbar({ brandLogo }: NavbarProps) {
                   className="object-cover"
                 />
               </div>
-              <span className="ml-3 font-bold text-[#121e34] tracking-wide hidden sm:block uppercase">
+              {/* <span className="ml-3 font-bold text-[#121e34] tracking-wide hidden sm:block uppercase">
                 K-Arena
-              </span>
+              </span> */}
             </Link>
           )}
         </div>
