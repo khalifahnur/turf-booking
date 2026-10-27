@@ -668,7 +668,7 @@ export default function AdminDashboard() {
                               </span>
                               {b.discount === "member" && (
                                 <span className="mt-1 inline-block rounded-full bg-[#88b03f]/20 px-2 py-0.5 text-[10px] font-bold text-[#3f6212]">
-                                  Member price
+                                  Member discount
                                   {Number(b.listAmount) > 0 && (
                                     <span className="font-semibold"> · list {formatKSH(Number(b.listAmount))}</span>
                                   )}

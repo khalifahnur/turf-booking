@@ -5,7 +5,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { addMemberAdmin, fetchMembersAdmin, removeMemberAdmin } from "@/lib/api";
 import { BRAND, KSH, priceFor } from "@/lib/booking";
 import { formatPhone } from "@/lib/camp";
-import { monthName, type MemberRecord } from "@/lib/members";
+import { monthName, ordinal, type MemberRecord } from "@/lib/members";
 
 const PHONE_PATTERN = /^[17]\d{8}$/;
 
@@ -29,22 +29,56 @@ function Stat({ label, value, sub, accent }: { label: string; value: string | nu
   );
 }
 
-/** One dot for each discounted session in the month, filled for those used. */
-function Sessions({ used, limit }: { used: number; limit: number }) {
-  const shown = Math.min(used, limit);
+/**
+ * One dot for each session up to the one the discount is on, filled for the
+ * sessions paid for this month. The last dot is the discounted session.
+ */
+function Sessions({ paid, discountSession }: { paid: number; discountSession: number }) {
+  const shown = Math.min(paid, discountSession);
   return (
     <span className="inline-flex items-center gap-2">
       <span aria-hidden="true" className="inline-flex gap-1">
-        {Array.from({ length: limit }, (_, i) => (
-          <span
-            key={i}
-            className={`h-2.5 w-2.5 rounded-full border ${i < shown ? "border-[#1f4b50] bg-[#1f4b50]" : "border-[#1f4b50]/40 bg-transparent"}`}
-          />
-        ))}
+        {Array.from({ length: discountSession }, (_, i) => {
+          const discounted = i === discountSession - 1;
+          return (
+            <span
+              key={i}
+              className={`h-2.5 w-2.5 rounded-full border ${
+                i < shown
+                  ? discounted
+                    ? "border-[#3f6212] bg-[#3f6212]"
+                    : "border-[#1f4b50] bg-[#1f4b50]"
+                  : discounted
+                    ? "border-[#3f6212] bg-transparent ring-1 ring-[#88b03f]/60"
+                    : "border-[#1f4b50]/40 bg-transparent"
+              }`}
+            />
+          );
+        })}
       </span>
       <span className="text-[13px] font-bold tabular-nums text-[#121e34]">
-        {used} <span className="font-semibold text-[#1f4b50]/80">of {limit}</span>
+        {paid} <span className="font-semibold text-[#1f4b50]/80">paid</span>
       </span>
+    </span>
+  );
+}
+
+/** What the member's next session costs, in words. */
+function NextSession({ member, percent, discountSession }: { member: MemberRecord; percent: number; discountSession: number }) {
+  if (member.discountUsed) {
+    return <span className="inline-block rounded-full bg-[#1f4b50]/10 px-2.5 py-1 text-xs font-bold text-[#1f4b50]">Discount given</span>;
+  }
+  const before = discountSession - 1 - member.sessions; // paid sessions still to go before the discounted one
+  if (before <= 0) {
+    return (
+      <span className="inline-block rounded-full bg-[#88b03f]/25 px-2.5 py-1 text-xs font-bold text-[#3f6212]">
+        Next session {percent}% off
+      </span>
+    );
+  }
+  return (
+    <span className="text-xs font-medium text-[#1f4b50]/90">
+      After {before} more paid session{before === 1 ? "" : "s"}
     </span>
   );
 }
@@ -74,7 +108,11 @@ export default function MembersPanel() {
       setName("");
       setPhone("");
       setFormError(null);
-      setNotice(`Added ${member.fullName}. They get the member price from their next booking.`);
+      setNotice(
+        data
+          ? `Added ${member.fullName}. Their ${ordinal(data.discountSession)} 8-a-side 2 hr session of each month is ${data.percent}% off.`
+          : `Added ${member.fullName}.`,
+      );
       queryClient.invalidateQueries({ queryKey: ["admin-members"] });
     },
     onError: (err: Error) => {
@@ -89,7 +127,7 @@ export default function MembersPanel() {
       const gone = members.find((m) => m.phoneNumber === number);
       setConfirming(null);
       setRemoveError(null);
-      setNotice(gone ? `Removed ${gone.fullName}. Their next booking is at the standard price.` : "Removed.");
+      setNotice(gone ? `Removed ${gone.fullName}. They no longer get the member discount.` : "Removed.");
       queryClient.invalidateQueries({ queryKey: ["admin-members"] });
     },
     onError: (err: Error) => {
@@ -122,10 +160,10 @@ export default function MembersPanel() {
   const stats = useMemo(
     () => ({
       count: members.length,
-      used: members.reduce((sum, m) => sum + m.used, 0),
-      full: data ? members.filter((m) => m.used >= data.limit).length : 0,
+      sessions: members.reduce((sum, m) => sum + m.sessions, 0),
+      discounts: members.filter((m) => m.discountUsed).length,
     }),
-    [members, data],
+    [members],
   );
 
   const memberPrice = data ? (priceFor("8Aside", 120) * (100 - data.percent)) / 100 : null;
@@ -140,11 +178,12 @@ export default function MembersPanel() {
         <p className="mt-1 max-w-2xl text-sm font-medium text-[#1f4b50]/80">
           {data && memberPrice !== null ? (
             <>
-              Members pay {data.percent}% less on the 8-a-side 2 hr session ({KSH(priceFor("8Aside", 120))} becomes{" "}
-              {KSH(memberPrice)}), for up to {data.limit} sessions a month. Everything else is at the standard price.
+              A member&rsquo;s {ordinal(data.discountSession)} 8-a-side 2 hr session of each month is {data.percent}% off (
+              {KSH(priceFor("8Aside", 120))} becomes {KSH(memberPrice)}); the {data.discountSession - 1} before it are at the
+              standard price, and so is everything else.
             </>
           ) : (
-            "Members get the member price on the sessions it covers."
+            "Members get a discount on one session a month."
           )}
           {updatedLabel && <> · Updated {updatedLabel}</>}
         </p>
@@ -234,14 +273,14 @@ export default function MembersPanel() {
         <Stat label="Members" value={unknown ? "–" : stats.count} sub="on the list" />
         <Stat
           label={month ? `${month} sessions` : "Sessions"}
-          value={unknown ? "–" : stats.used}
-          sub="booked at the member price"
+          value={unknown ? "–" : stats.sessions}
+          sub="paid for by members"
           accent="#007a3a"
         />
         <Stat
-          label="All used"
-          value={unknown ? "–" : stats.full}
-          sub={data ? `reached ${data.limit} this month` : "reached the limit"}
+          label="Discounts given"
+          value={unknown ? "–" : stats.discounts}
+          sub={month ? `so far in ${month}` : "this month"}
           accent="#7a6300"
         />
       </div>
@@ -279,11 +318,11 @@ export default function MembersPanel() {
           // "relative" makes this the containing block of the visually-hidden labels in the
           // table, so they scroll with it instead of stretching the whole page sideways.
           <div className="relative overflow-x-auto" style={{ scrollbarWidth: "thin", scrollbarColor: "rgba(18,30,52,0.1) transparent" }}>
-            <table className="w-full border-collapse text-left" style={{ minWidth: 760 }}>
+            <table className="w-full border-collapse text-left" style={{ minWidth: 860 }}>
               <caption className="sr-only">Members</caption>
               <thead>
                 <tr className="border-b border-[#121e34]/10 bg-[#F8F5F2]">
-                  {["Name", "M-Pesa number", `${month} sessions`, "Added", ""].map((h, i) => (
+                  {["Name", "M-Pesa number", `${month} sessions`, "Next session", "Added", ""].map((h, i) => (
                     <th key={i} scope="col" className="px-5 py-4 text-xs font-bold uppercase tracking-[0.14em] text-[#1f4b50]/80">
                       {h || <span className="sr-only">Actions</span>}
                     </th>
@@ -306,7 +345,10 @@ export default function MembersPanel() {
                       </a>
                     </td>
                     <td className="px-5 py-4">
-                      <Sessions used={m.used} limit={data.limit} />
+                      <Sessions paid={m.sessions} discountSession={data.discountSession} />
+                    </td>
+                    <td className="px-5 py-4">
+                      <NextSession member={m} percent={data.percent} discountSession={data.discountSession} />
                     </td>
                     <td className="whitespace-nowrap px-5 py-4 text-xs font-medium text-[#1f4b50]/90">{added(m.createdAt)}</td>
                     <td className="px-5 py-4 text-right">

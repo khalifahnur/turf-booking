@@ -1,7 +1,7 @@
 "use client";
 
 import { KSH, PITCH_OPTIONS, priceFor, SESSION_LENGTHS } from "@/lib/booking";
-import { monthName } from "@/lib/members";
+import { monthName, ordinal } from "@/lib/members";
 import { clock12, describeSession, formatWindows, type ScheduleWindow } from "@/lib/schedule";
 import { BookingFormData, BookingRecord, DayInfo, PitchType, Quote, SessionLength, TimeSlot } from "@/lib/types";
 import React, { useEffect, useState } from "react";
@@ -361,15 +361,23 @@ export default function BookingSheet({
                 {member && memberPriceApplied && (
                   <p className="mt-2 text-xs font-semibold text-[#3f6212]">
                     <span className="mr-1.5 inline-block rounded-full bg-[#88b03f]/25 px-2 py-0.5 text-[11px] font-bold">
-                      Member price · {member.percent}% off
+                      Member discount · {member.percent}% off
                     </span>
-                    Session {member.used + 1} of {member.limit} at the member price in {monthName(member.month)}.
+                    {member.sessions + 1 === member.discountSession
+                      ? `This is your ${ordinal(member.discountSession)} session of ${monthName(member.month)}.`
+                      : `Your member discount for ${monthName(member.month)}.`}
                   </p>
                 )}
-                {member && !member.applied && (
+                {member && !member.applied && member.discountUsed && (
                   <p className="mt-2 text-xs font-medium text-[#7a4a00]">
-                    You have used all {member.limit} member-price sessions for {monthName(member.month)}, so this
-                    session is at the standard price.
+                    You have had your member discount for {monthName(member.month)}, so this session is at the
+                    standard price.
+                  </p>
+                )}
+                {member && !member.applied && !member.discountUsed && (
+                  <p className="mt-2 text-xs font-medium text-[#1f4b50]">
+                    Session {member.sessions + 1} of {member.discountSession} this month. Your{" "}
+                    {ordinal(member.discountSession)} session of {monthName(member.month)} is {member.percent}% off.
                   </p>
                 )}
               </div>
