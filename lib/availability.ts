@@ -1,4 +1,7 @@
+import { parseRange } from "./schedule";
 import type { BookingRecord, PitchType, TimeSlot } from "./types";
+
+export { parseRange };
 
 /** The pitch holds two half-pitch units: 5-a-side uses one, 8-a-side uses both. */
 const CAPACITY = 2;
@@ -12,19 +15,6 @@ interface Occupancy {
   end: number;
   units: number;
   pending: boolean;
-}
-
-/** "16:00 – 18:00" (or with a plain hyphen) to minutes after midnight. */
-export function parseRange(range: string): [number, number] | null {
-  const parts = range.replace(/[–—−]/g, "-").split("-");
-  if (parts.length !== 2) return null;
-  const toMinutes = (s: string) => {
-    const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
-    return m ? Number(m[1]) * 60 + Number(m[2]) : null;
-  };
-  const start = toMinutes(parts[0]);
-  const end = toMinutes(parts[1]);
-  return start === null || end === null || end <= start ? null : [start, end];
 }
 
 /**
@@ -54,9 +44,11 @@ export function slotAvailability(
   date: string,
   records: BookingRecord[],
 ): SlotAvailability {
-  const bounds = parseRange(slot.timeRange);
-  if (!bounds) return { "5Aside": "Booked", "8Aside": "Booked", halvesLeft: 0 };
-  const [start, end] = bounds;
+  // Minutes on the operating day's own clock: a session into the early hours
+  // has an end past 1440, so it overlaps the sessions around midnight correctly.
+  const start = slot.from;
+  const end = slot.to;
+  const bounds: [number, number] = [start, end];
 
   const existing: Occupancy[] = [];
   for (const r of records) {

@@ -1,4 +1,4 @@
-import { PitchOption, PitchType, SessionLength, TimeSlot } from "./types";
+import { PitchOption, PitchType, SessionLength } from "./types";
 
 export const BRAND = {
   colors: {
@@ -17,12 +17,18 @@ export const BRAND = {
 } as const;
 
 /**
- * Opening hours (24h clock). The booking API enforces the same hours and the
- * same session grid, so a slot the UI offers is always one the server accepts.
+ * The venue's opening hours as written on the website and in its search-engine
+ * data (24h clock; "01:00" is one in the morning of the next day). Weekends and
+ * Kenyan public holidays share the weekend hours. The booking calendar itself is
+ * never drawn from this: it shows the sessions the API sends (lib/schedule.ts),
+ * so what it offers is always what the server accepts.
  */
 export const OPENING_HOURS = {
-  weekday: { open: 16, close: 22 },
-  weekend: { open: 8, close: 22 },
+  weekday: [
+    { open: "07:00", close: "09:00" },
+    { open: "15:00", close: "01:00" },
+  ],
+  weekend: [{ open: "07:00", close: "01:00" }],
 } as const;
 
 export const SESSION_LENGTHS: { minutes: SessionLength; short: string; long: string }[] = [
@@ -44,35 +50,6 @@ export const PRICES_KES: Record<PitchType, Record<SessionLength, number>> = {
 
 export const priceFor = (pitch: PitchType, minutes: SessionLength): number =>
   PRICES_KES[pitch][minutes];
-
-const clock = (hour: number): string => `${String(hour).padStart(2, "0")}:00`;
-
-function buildSlots(open: number, close: number, minutes: SessionLength): TimeSlot[] {
-  const hours = minutes / 60;
-  const slots: TimeSlot[] = [];
-  for (let h = open; h + hours <= close; h += hours) {
-    slots.push({
-      timeRange: `${clock(h)} – ${clock(h + hours)}`,
-      startTime: clock(h),
-      minutes,
-    });
-  }
-  return slots;
-}
-
-const SLOTS = {
-  weekday: {
-    60: buildSlots(OPENING_HOURS.weekday.open, OPENING_HOURS.weekday.close, 60),
-    120: buildSlots(OPENING_HOURS.weekday.open, OPENING_HOURS.weekday.close, 120),
-  },
-  weekend: {
-    60: buildSlots(OPENING_HOURS.weekend.open, OPENING_HOURS.weekend.close, 60),
-    120: buildSlots(OPENING_HOURS.weekend.open, OPENING_HOURS.weekend.close, 120),
-  },
-} as const;
-
-export const getSlots = (isWeekend: boolean, minutes: SessionLength): TimeSlot[] =>
-  SLOTS[isWeekend ? "weekend" : "weekday"][minutes];
 
 export const PITCH_OPTIONS: PitchOption[] = [
   {

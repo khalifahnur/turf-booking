@@ -4,11 +4,20 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-import { fetchBookings, initiateBooking } from "@/lib/api";
+import { fetchBookings, fetchQuote, fetchSchedule, initiateBooking } from "@/lib/api";
 import type { BookingFormData, DayInfo, PitchType, SessionLength, TimeSlot } from "@/lib/types";
-import { DEFAULT_SESSION_LENGTH, getSlots } from "@/lib/booking";
+import { DEFAULT_SESSION_LENGTH, KSH } from "@/lib/booking";
+import {
+  buildDays,
+  currentOperatingDate,
+  formatWindows,
+  isSlotOpen,
+  slotsFor,
+  venueClock,
+} from "@/lib/schedule";
 import { PitchBookingSlots } from "@/lib/slots";
 import { useFooterReveal } from "@/hook/useFooterReveal";
+import { useNow } from "@/hook/useNow";
 import HeroSection from "./HeroSection";
 import Navbar from "./Navbar";
 import TestimonialsSection from "./TestimonialSection";
@@ -16,26 +25,6 @@ import FooterSection from "./FooterSection";
 import BookingCard from "./BookingCard";
 import BookingSheet from "./BookingModal";
 import { usePaymentWebSocket } from "@/hook/usePaymentWebsocket";
-
-function buildAvailableDays(): DayInfo[] {
-  const today = new Date();
-  return Array.from({ length: 30 }, (_, i) => {
-    const date = new Date(today);
-    date.setDate(today.getDate() + i);
-    const y = date.getFullYear();
-    const mm = String(date.getMonth() + 1).padStart(2, "0");
-    const dd = String(date.getDate()).padStart(2, "0");
-    const dow = date.getDay();
-    return {
-      dateObj: date,
-      dayName: date.toLocaleDateString("en-US", { weekday: "short" }),
-      dateNum: date.getDate(),
-      monthName: date.toLocaleDateString("en-US", { month: "short" }),
-      fullDateStr: `${y}-${mm}-${dd}`,
-      isWeekend: dow === 0 || dow === 6,
-    };
-  });
-}
 
 export default function PitchBooking({
   heroTitle,
@@ -50,12 +39,45 @@ export default function PitchBooking({
 }: PitchBookingSlots = {}) {
   const queryClient = useQueryClient();
 
-  const [availableDays] = useState<DayInfo[]>(buildAvailableDays);
-  const [selectedDate, setSelectedDate] = useState<DayInfo | null>(
-    () => buildAvailableDays()[0] ?? null
+  // Which days can be booked, what each day's hours are (weekday, weekend or
+  // public holiday) and the sessions that gives all come from the API, so this
+  // page offers exactly what the server will accept.
+  const {
+    data: schedule,
+    isError: scheduleFailed,
+    refetch: refetchSchedule,
+  } = useQuery({
+    queryKey: ["schedule"],
+    queryFn: fetchSchedule,
+    // The calendar only changes when the day does (or a holiday is declared), but
+    // a page left open overnight must pick up the new day.
+    staleTime: 5 * 60_000,
+    refetchInterval: 10 * 60_000,
+    retry: 2,
+  });
+  const now = useNow();
+
+  // The venue's own clock, whatever timezone the visitor's device is in. The
+  // operating day runs until the venue shuts in the early hours, so just after
+  // midnight "today" is still yesterday's date.
+  const clock = useMemo(
+    () => (schedule && now !== null ? venueClock(new Date(now), schedule.timezone) : null),
+    [schedule, now]
+  );
+  const firstDate = schedule && now !== null ? currentOperatingDate(schedule, new Date(now)) : null;
+  const availableDays = useMemo(
+    () => (schedule && firstDate ? buildDays(schedule, firstDate) : []),
+    [schedule, firstDate]
   );
 
+  const [selectedDateStr, setSelectedDateStr] = useState<string | null>(null);
+  const selectedDate: DayInfo | null =
+    availableDays.find((d) => d.fullDateStr === selectedDateStr) ?? availableDays[0] ?? null;
+
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot | null>(null);
+  // The day a slot was picked on. The booking is made for this day, not for
+  // whichever day the calendar shows by the time the form is sent.
+  const [pickedDay, setPickedDay] = useState<DayInfo | null>(null);
   const [selectedPitchType, setSelectedPitchType] = useState<PitchType | null>(null);
   const [duration, setDuration] = useState<SessionLength>(DEFAULT_SESSION_LENGTH);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -73,6 +95,27 @@ export default function PitchBooking({
     queryKey: ["bookings"],
     queryFn: fetchBookings,
     refetchInterval: 3_000,
+  });
+
+  // What this booking costs for the number being paid from. A member's number
+  // gets the member price on the sessions it covers; the API decides that, and
+  // works the price out again when the booking is made, so this only shows it.
+  const phoneReady = /^[17]\d{8}$/.test(formData.phoneNumber);
+  const { data: quote, isLoading: quoteLoading } = useQuery({
+    queryKey: ["quote", pickedDay?.fullDateStr, selectedSlot?.timeRange, selectedPitchType, formData.phoneNumber],
+    queryFn: () =>
+      fetchQuote({
+        phoneNumber: `254${formData.phoneNumber}`,
+        date: pickedDay!.fullDateStr,
+        timeRange: selectedSlot!.timeRange,
+        pitchType: selectedPitchType!,
+      }),
+    enabled: !!pickedDay && !!selectedSlot && !!selectedPitchType && phoneReady,
+    staleTime: 20_000,
+    retry: 1,
+    // The price on screen must not change while the customer is switching to M-Pesa
+    // and back. If it has really changed, the API says so when they pay.
+    refetchOnWindowFocus: false,
   });
 
   const [txReference, setTxReference] = useState<string | null>(null);
@@ -94,6 +137,8 @@ export default function PitchBooking({
       setSelectedPitchType(null);
 
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      // That session now counts towards a member's discounted sessions for the month.
+      queryClient.invalidateQueries({ queryKey: ["quote"] });
 
     } else if (paymentStatus === "Failed") {
       toast.error("Payment failed or was cancelled.", {
@@ -101,6 +146,7 @@ export default function PitchBooking({
         duration: 5000,
       });
       setTxReference(null);
+      queryClient.invalidateQueries({ queryKey: ["quote"] });
     }
   }, [paymentStatus, txReference, queryClient]);
 
@@ -109,23 +155,46 @@ export default function PitchBooking({
     onSuccess: (data) => {
       if (data && data.reference) {
         setTxReference(data.reference);   
-        toast.loading("Check your phone and enter M-Pesa PIN", {
-          id: "payment-toast",
-        });
-       
+        toast.loading(
+          `Check your phone and enter M-Pesa PIN${typeof data.amount === "number" ? ` (${KSH(data.amount)})` : ""}`,
+          { id: "payment-toast" },
+        );
       } else {
         toast.error("Invalid response from server");
       }
     },
     onError: (err: Error) => {
-      toast.error(`${err}`);
+      toast.error(err.message);
+      // If the price had changed, show the new one.
+      queryClient.invalidateQueries({ queryKey: ["quote"] });
     },
   });
 
-  const currentSlots = useMemo(
-    () => getSlots(!!selectedDate?.isWeekend, duration),
-    [selectedDate, duration]
-  );
+  // Sessions that have started (less than the cut-off left) are no longer offered.
+  const currentSlots = useMemo(() => {
+    if (!schedule || !selectedDate || !clock) return [];
+    return slotsFor(schedule, selectedDate.kind, duration).filter((slot) =>
+      isSlotOpen(slot, selectedDate.fullDateStr, clock, schedule.minRemainingMinutes)
+    );
+  }, [schedule, selectedDate, clock, duration]);
+
+  const bookingDay = selectedSlot && pickedDay ? pickedDay : selectedDate;
+  const slotClosed =
+    !!schedule &&
+    !!clock &&
+    !!selectedSlot &&
+    !!pickedDay &&
+    !isSlotOpen(selectedSlot, pickedDay.fullDateStr, clock, schedule.minRemainingMinutes);
+
+  const hours = useMemo(() => {
+    if (!schedule) return null;
+    const { weekday, weekend, holiday } = schedule.kinds;
+    return {
+      weekday: formatWindows(weekday.windows),
+      weekend: formatWindows(weekend.windows),
+      holiday: formatWindows(holiday.windows),
+    };
+  }, [schedule]);
 
   const monthLabel =
     selectedDate?.dateObj.toLocaleDateString("en-US", {
@@ -134,6 +203,7 @@ export default function PitchBooking({
     }) ?? "";
 
   const handlePitchSelect = (slot: TimeSlot, pitchType: PitchType) => {
+    setPickedDay(selectedDate);
     setSelectedSlot(slot);
     setSelectedPitchType(pitchType);
     setFormData({ userName: "", email: "", phoneNumber: "" });
@@ -141,13 +211,16 @@ export default function PitchBooking({
 
   const handleBookingSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSlot || !selectedDate || !selectedPitchType) return;
+    if (!selectedSlot || !pickedDay || !selectedPitchType || slotClosed) return;
     bookingMutation.mutate({
       ...formData,
       phoneNumber: `254${formData.phoneNumber}`,
-      date: selectedDate.fullDateStr,
+      date: pickedDay.fullDateStr,
       timeRange: selectedSlot.timeRange,
       pitchType: selectedPitchType,
+      // The price on screen. If it is no longer the price, the API says so
+      // instead of charging an amount the customer has not seen.
+      expectedAmount: quote?.amount,
     });
   };
 
@@ -155,6 +228,7 @@ export default function PitchBooking({
     setTxReference(null);
     setIsModalOpen(false);
     toast.dismiss("payment-toast");
+    queryClient.invalidateQueries({ queryKey: ["quote"] });
   };
 
   return (
@@ -186,8 +260,11 @@ export default function PitchBooking({
             <BookingCard
               availableDays={availableDays}
               selectedDate={selectedDate}
+              scheduleStatus={schedule ? "ready" : scheduleFailed ? "error" : "loading"}
+              onRetrySchedule={() => void refetchSchedule()}
+              hours={hours}
               onDaySelect={(day) => {
-                setSelectedDate(day);
+                setSelectedDateStr(day.fullDateStr);
                 setSelectedSlot(null);
                 setSelectedPitchType(null);
                 setIsModalOpen(true);
@@ -211,8 +288,12 @@ export default function PitchBooking({
       <BookingSheet
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        selectedDate={selectedDate}
+        selectedDate={bookingDay}
         currentSlots={currentSlots}
+        windows={schedule && selectedDate ? schedule.kinds[selectedDate.kind].windows : []}
+        slotClosed={slotClosed}
+        quote={quote}
+        quoteLoading={quoteLoading}
         slotStatuses={Array.isArray(slotStatuses) ? slotStatuses : []}
         duration={duration}
         onDurationChange={setDuration}

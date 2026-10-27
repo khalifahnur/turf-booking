@@ -11,8 +11,6 @@ import {
   SOCIAL_LINKS,
 } from "@/lib/site";
 
-const hhmm = (hour: number) => `${String(hour).padStart(2, "0")}:00`;
-
 /**
  * schema.org description of the venue, so search engines can show it as a local
  * business with its hours, price range and contact details. Everything here is
@@ -51,19 +49,21 @@ export function homepageJsonLd() {
         currenciesAccepted: "KES",
         paymentAccepted: "M-Pesa",
         priceRange: `KSh ${lowest.toLocaleString("en-KE")} - KSh ${highest.toLocaleString("en-KE")}`,
+        // A closing time earlier than the opening time is the next morning: the
+        // venue is open until 1am. Kenyan public holidays follow the weekend hours.
         openingHoursSpecification: [
-          {
+          ...OPENING_HOURS.weekday.map((w) => ({
             "@type": "OpeningHoursSpecification",
             dayOfWeek: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-            opens: hhmm(OPENING_HOURS.weekday.open),
-            closes: hhmm(OPENING_HOURS.weekday.close),
-          },
-          {
+            opens: w.open,
+            closes: w.close,
+          })),
+          ...OPENING_HOURS.weekend.map((w) => ({
             "@type": "OpeningHoursSpecification",
             dayOfWeek: ["Saturday", "Sunday"],
-            opens: hhmm(OPENING_HOURS.weekend.open),
-            closes: hhmm(OPENING_HOURS.weekend.close),
-          },
+            opens: w.open,
+            closes: w.close,
+          })),
         ],
         // Only real public profiles: skip placeholder "#" links and admin URLs.
         sameAs: SOCIAL_LINKS.map((s) => s.url).filter(
