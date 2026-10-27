@@ -119,13 +119,16 @@ export interface Quote {
 export interface MemberQuote {
   /** The discount, as a percentage. */
   percent: number;
-  /** False once the member has used the month's discounted sessions. */
+  /** True when this booking is the one that gets the discount. */
   applied: boolean;
   /** The month the session falls in, "2026-11". */
   month: string;
-  /** Member-priced sessions already held in that month, not counting this one. */
-  used: number;
-  limit: number;
+  /** 8-a-side 2 hour sessions the number has paid for in that month, not counting this one. */
+  sessions: number;
+  /** Which session of the month the discount is given on: the 4th. */
+  discountSession: number;
+  /** The month's discount has already been given (to a booking that is paid or awaiting payment). */
+  discountUsed: boolean;
 }
 
 /** A started booking: the reference to follow the payment, and what is being charged. */
