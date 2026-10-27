@@ -1,5 +1,5 @@
 import type { CampRegistrationPayload, CampRegistrationRecord } from "@/lib/camp";
-import type { Schedule } from "@/lib/schedule";
+import { isSchedule, type Schedule } from "@/lib/schedule";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
@@ -13,7 +13,9 @@ export const fetchBookings = async () => {
 export const fetchSchedule = async (): Promise<Schedule> => {
   const res = await fetch(`${BASE_URL}/schedule`, { cache: "no-store" });
   if (!res.ok) throw new Error("Failed to load the schedule");
-  return res.json();
+  const schedule: unknown = await res.json();
+  if (!isSchedule(schedule)) throw new Error("Failed to load the schedule");
+  return schedule;
 };
 
 // Goes through our own Next.js route, which checks the admin session and holds

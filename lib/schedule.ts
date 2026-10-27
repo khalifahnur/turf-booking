@@ -41,6 +41,39 @@ export interface Schedule {
   days: ScheduleDay[];
 }
 
+const DAY_KINDS: DayKind[] = ["weekday", "weekend", "holiday"];
+
+const isNumber = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
+const isString = (v: unknown): v is string => typeof v === "string";
+
+/**
+ * Is this what GET /api/v1/schedule sends? Checked before the page uses it, so
+ * an API on another version shows "couldn't load the calendar" instead of
+ * breaking the page.
+ */
+export function isSchedule(value: unknown): value is Schedule {
+  const s = value as Partial<Schedule> | null;
+  if (!s || typeof s !== "object") return false;
+  if (!isString(s.timezone) || !isString(s.today) || !isNumber(s.minRemainingMinutes)) return false;
+  if (!Array.isArray(s.days) || !s.kinds || typeof s.kinds !== "object") return false;
+  const daysOk = s.days.every(
+    (d) => !!d && isString(d.date) && /^\d{4}-\d{2}-\d{2}$/.test(d.date) && DAY_KINDS.includes(d.kind) && (d.holiday === undefined || isString(d.holiday))
+  );
+  const kindsOk = DAY_KINDS.every((k) => {
+    const kind = s.kinds?.[k];
+    return (
+      !!kind &&
+      Array.isArray(kind.windows) &&
+      kind.windows.every((w) => !!w && isString(w.open) && isString(w.close) && isNumber(w.from) && isNumber(w.to)) &&
+      Array.isArray(kind.sessions) &&
+      kind.sessions.every(
+        (x) => !!x && isNumber(x.minutes) && isString(x.start) && isString(x.end) && isString(x.label) && isNumber(x.from) && isNumber(x.to)
+      )
+    );
+  });
+  return daysOk && kindsOk;
+}
+
 export const MINUTES_PER_DAY = 24 * 60;
 
 // A session belongs to the operating day it starts on, and times within it are
@@ -115,24 +148,36 @@ export interface VenueClock {
 }
 
 export const VENUE_TIMEZONE = "Africa/Nairobi";
+/** Nairobi is UTC+3 all year round, which is all that is needed if a browser cannot name the timezone. */
+const VENUE_UTC_OFFSET_MINUTES = 3 * 60;
+
+const pad = (n: number, width = 2) => String(n).padStart(width, "0");
 
 /** The time at the venue, whatever timezone the visitor's device is set to. */
 export function venueClock(now: Date, timeZone: string = VENUE_TIMEZONE): VenueClock {
-  const f = new Intl.DateTimeFormat("en-CA", {
-    timeZone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hourCycle: "h23",
-  }).formatToParts(now);
-  const get = (type: string) => Number(f.find((p) => p.type === type)?.value ?? 0);
-  return {
-    date: `${String(get("year")).padStart(4, "0")}-${String(get("month")).padStart(2, "0")}-${String(get("day")).padStart(2, "0")}`,
-    minutes: get("hour") * 60 + get("minute") + get("second") / 60,
-  };
+  try {
+    const f = new Intl.DateTimeFormat("en-CA", {
+      timeZone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hourCycle: "h23",
+    }).formatToParts(now);
+    const get = (type: string) => Number(f.find((p) => p.type === type)?.value ?? 0);
+    return {
+      date: `${pad(get("year"), 4)}-${pad(get("month"))}-${pad(get("day"))}`,
+      minutes: get("hour") * 60 + get("minute") + get("second") / 60,
+    };
+  } catch {
+    const t = new Date(now.getTime() + VENUE_UTC_OFFSET_MINUTES * 60_000);
+    return {
+      date: `${pad(t.getUTCFullYear(), 4)}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`,
+      minutes: t.getUTCHours() * 60 + t.getUTCMinutes() + t.getUTCSeconds() / 60,
+    };
+  }
 }
 
 /** How far past midnight the latest closing time reaches, from the schedule itself. */
