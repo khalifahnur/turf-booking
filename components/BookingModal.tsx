@@ -1,6 +1,7 @@
 "use client";
 
 import { KSH, PITCH_OPTIONS, priceFor, SESSION_LENGTHS } from "@/lib/booking";
+import { clock12, describeSession, formatWindows, type ScheduleWindow } from "@/lib/schedule";
 import { BookingFormData, BookingRecord, DayInfo, PitchType, SessionLength, TimeSlot } from "@/lib/types";
 import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -31,6 +32,10 @@ interface BookingSheetProps {
   onClose: () => void;
   selectedDate: DayInfo | null;
   currentSlots: TimeSlot[];
+  /** The stretches of the day with sessions in them, for the selected day. */
+  windows: ScheduleWindow[];
+  /** The picked session has started or is about to, so it can no longer be paid for. */
+  slotClosed: boolean;
   slotStatuses: BookingRecord[];
   duration: SessionLength;
   onDurationChange: (minutes: SessionLength) => void;
@@ -51,6 +56,8 @@ export default function BookingSheet({
   onClose,
   selectedDate,
   currentSlots,
+  windows,
+  slotClosed,
   slotStatuses,
   duration,
   onDurationChange,
@@ -111,6 +118,26 @@ export default function BookingSheet({
     onSubmit(e);
   };
 
+  const renderSlot = (slot: TimeSlot) => (
+    <SlotCard
+      key={slot.timeRange}
+      slot={slot}
+      selectedDateStr={selectedDate.fullDateStr}
+      slotStatuses={slotStatuses}
+      onPitchSelect={onPitchSelect}
+    />
+  );
+
+  // A day with more than one stretch of opening hours (weekdays) lists its
+  // sessions under each, so the gap in the middle of the day is visible.
+  const grouped = (() => {
+    if (windows.length < 2) return null;
+    const groups = windows
+      .map((w) => ({ window: w, slots: currentSlots.filter((s) => s.from >= w.from && s.to <= w.to) }))
+      .filter((g) => g.slots.length > 0);
+    return groups.reduce((n, g) => n + g.slots.length, 0) === currentSlots.length ? groups : null;
+  })();
+
   const renderSlotList = () => (
     <>
       <div className="flex justify-between items-start px-6 pt-8 pb-5 shrink-0 relative overflow-hidden border-b border-[#121e34]/10">
@@ -128,6 +155,15 @@ export default function BookingSheet({
         day: "numeric",
       })}
     </p>
+    {selectedDate.holiday && (
+      <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-[#fed107]/25 px-2.5 py-1 text-[11px] font-bold text-[#7a5b00]">
+        <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#E10600]" />
+        Public holiday · {selectedDate.holiday}
+      </p>
+    )}
+    {windows.length > 0 && (
+      <p className="mt-1.5 text-xs font-medium text-[#1f4b50]/80">Open {formatWindows(windows)}</p>
+    )}
 
     <div
       role="radiogroup"
@@ -179,20 +215,21 @@ export default function BookingSheet({
   </button>
 </div>
       <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3" style={{ scrollbarWidth: "none" }}>
-        {currentSlots.length > 0 ? (
-          currentSlots.map((slot) => (
-            <SlotCard
-              key={slot.timeRange}
-              slot={slot}
-              selectedDateStr={selectedDate.fullDateStr}
-              slotStatuses={slotStatuses}
-              onPitchSelect={onPitchSelect}
-            />
+        {currentSlots.length === 0 ? (
+          <p className="text-center text-[#1f4b50]/70 py-8 text-sm font-medium">
+            No more sessions are open on this day. Please pick another day.
+          </p>
+        ) : grouped ? (
+          grouped.map(({ window: w, slots }) => (
+            <section key={w.from} aria-label={`Sessions from ${clock12(w.open)} to ${clock12(w.close)}`} className="space-y-3">
+              <h4 className="px-1 pt-1 text-[11px] font-bold uppercase tracking-widest text-[#1f4b50]/60">
+                {clock12(w.open)} – {clock12(w.close)}
+              </h4>
+              {slots.map(renderSlot)}
+            </section>
           ))
         ) : (
-          <p className="text-center text-[#1f4b50]/70 py-8 text-sm font-medium">
-            No sessions available for this day.
-          </p>
+          currentSlots.map(renderSlot)
         )}
       </div>
     </>
@@ -204,6 +241,7 @@ export default function BookingSheet({
     const accentColor = pitch.type === "5Aside" ? "#88b03f" : "#1f4b50";
     const length = SESSION_LENGTHS.find((l) => l.minutes === selectedSlot.minutes)!;
     const total = priceFor(pitch.type, selectedSlot.minutes);
+    const when = describeSession(selectedDate.fullDateStr, selectedSlot.timeRange);
 
     return (
       <>
@@ -230,13 +268,11 @@ export default function BookingSheet({
               </h3>
 
               <p className="text-xs mt-1.5 font-medium opacity-80 text-[#1f4b50]">
-                {selectedDate.dateObj.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}{" "}
-                · {selectedSlot.timeRange} · {length.short}
+                {when.dateText} · {selectedSlot.timeRange} · {length.short}
               </p>
+              {when.note && (
+                <p className="text-xs mt-1 font-semibold text-[#1f4b50]">{when.note}</p>
+              )}
             </div>
           </div>
         </div>
@@ -245,6 +281,14 @@ export default function BookingSheet({
           <form 
           onSubmit={handleLocalSubmit} 
           className="px-6 py-6 space-y-3">
+            {slotClosed && !isBusy && (
+              <p
+                role="alert"
+                className="rounded-xl border border-[#E10600]/20 bg-[#E10600]/5 px-4 py-3 text-xs font-semibold text-[#9b1c1c]"
+              >
+                This session is no longer open for booking. Go back and choose another time.
+              </p>
+            )}
             <Field
               label="Representative Name"
               value={formData.userName}
@@ -291,7 +335,7 @@ export default function BookingSheet({
             <div className="pt-3 space-y-3">
               <button
                 type="submit"
-                disabled={isBusy}
+                disabled={isBusy || slotClosed}
                 className="w-full flex items-center h-12 justify-center gap-2.5 rounded-full font-semibold text-[14px] text-white transition-all duration-300 focus:outline-none relative group overflow-hidden shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-70 bg-[#88b03f] hover:bg-[#769a35]"
               >
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20 group-hover:bg-white/30" />

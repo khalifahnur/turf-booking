@@ -35,22 +35,34 @@
 export type PitchType = "5Aside" | "8Aside";
 export type BookingStatus = "Pending" | "Confirmed" | "Booked" | "Failed";
 
+/** Which opening hours apply on a date; the server decides, public holidays included. */
+export type DayKind = "weekday" | "weekend" | "holiday";
+
 export interface DayInfo {
   dateObj: Date;
   dayName: string;   
   dateNum: number;   
   monthName: string; 
   fullDateStr: string; 
+  /** A Saturday or a Sunday. */
   isWeekend: boolean;
+  kind: DayKind;
+  /** The public holiday's name, when kind is "holiday". */
+  holiday?: string;
 }
 
 /** Session length in minutes. */
 export type SessionLength = 60 | 120;
 
 export interface TimeSlot {
+  /** The canonical label the booking API takes: "16:00 – 18:00", or "23:00 – 01:00" past midnight. */
   timeRange: string;
+  /** "HH:MM", for <time dateTime>. */
   startTime: string;
   minutes: SessionLength;
+  /** Minutes after the operating day's midnight. A session into the early hours has `to` past 1440. */
+  from: number;
+  to: number;
 }
 
 export interface PitchOption {

@@ -1,10 +1,18 @@
 import type { CampRegistrationPayload, CampRegistrationRecord } from "@/lib/camp";
+import type { Schedule } from "@/lib/schedule";
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL;
 
 export const fetchBookings = async () => {
   const res = await fetch(`${BASE_URL}/bookings`);
   if (!res.ok) throw new Error("Failed to fetch slots");
+  return res.json();
+};
+
+/** The booking calendar: which days can be booked and the sessions each offers. */
+export const fetchSchedule = async (): Promise<Schedule> => {
+  const res = await fetch(`${BASE_URL}/schedule`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to load the schedule");
   return res.json();
 };
 

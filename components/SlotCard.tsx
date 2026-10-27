@@ -1,5 +1,6 @@
 import { BRAND, KSH, PITCH_OPTIONS, priceFor, SESSION_LENGTHS } from "@/lib/booking";
 import { slotAvailability } from "@/lib/availability";
+import { describeSession } from "@/lib/schedule";
 import type { BookingRecord, PitchType, TimeSlot } from "@/lib/types";
 import React, { useMemo, useState } from "react";
 
@@ -40,6 +41,9 @@ export default function SlotCard({
   );
 
   const length = SESSION_LENGTHS.find((l) => l.minutes === slot.minutes);
+  // The late sessions run into the next morning, so the card says so and nobody
+  // books "23:00 – 01:00" thinking it ends the same night.
+  const when = useMemo(() => describeSession(selectedDateStr, slot.timeRange), [selectedDateStr, slot.timeRange]);
 
   const displayItems = PITCH_OPTIONS.map((pitch) => {
     const state = availability[pitch.type];
@@ -78,12 +82,17 @@ export default function SlotCard({
           className="pointer-events-none absolute -left-4 -top-4 h-8 w-8 rounded-full border border-[#1f4b50]/15"
         />
 
-        <time
-          className="font-mono text-sm font-bold tabular-nums tracking-tight text-[#121e34] sm:text-base"
-          dateTime={slot.startTime}
-        >
-          {slot.timeRange}
-        </time>
+        <div className="min-w-0 flex-1">
+          <time
+            className="block whitespace-nowrap font-mono text-sm font-bold tabular-nums tracking-tight text-[#121e34] sm:text-base"
+            dateTime={slot.startTime}
+          >
+            {slot.timeRange}
+          </time>
+          {when.caption && (
+            <p className="mt-0.5 text-[10px] font-semibold text-[#1f4b50] sm:text-[11px]">{when.caption}</p>
+          )}
+        </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5">
           <span
@@ -161,7 +170,7 @@ export default function SlotCard({
                     if (isAvailable) onPitchSelect(slot, pitch.type);
                   }}
                   disabled={!isAvailable}
-                  aria-label={`Book ${pitch.label} for ${slot.timeRange} — ${displayStatus}`}
+                  aria-label={`Book ${pitch.label} for ${slot.timeRange}${when.note ? ` (${when.note})` : ""} — ${displayStatus}`}
                   className={`group relative flex w-full items-center justify-between gap-1.5 overflow-hidden rounded-[10px] border py-2.5 pl-3 pr-2.5 text-left transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 sm:gap-2 sm:py-3 sm:pl-4 sm:pr-3.5 ${
                     isAvailable ? "cursor-pointer" : "cursor-not-allowed"
                   }`}

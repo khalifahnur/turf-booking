@@ -5,13 +5,14 @@ import { useQuery } from "@tanstack/react-query";
 import { signIn, signOut, useSession } from "next-auth/react";
 import { fetchBookings, fetchBookingsAdmin } from "@/lib/api";
 import { BRAND } from "@/lib/booking";
+import { describeSession, localDate } from "@/lib/schedule";
 import Link from "next/link";
 import Image from "next/image";
 import CampRegistrationsPanel from "@/components/admin/CampRegistrationsPanel";
 
 function formatDate(raw: string) {
   try {
-    const d = new Date(raw);
+    const d = localDate(raw);
     return d.toLocaleDateString("en-GB", {
       weekday: "short",
       day: "numeric",
@@ -20,6 +21,10 @@ function formatDate(raw: string) {
   } catch {
     return raw;
   }
+}
+
+function weekdayOf(raw: string) {
+  return localDate(raw).toLocaleDateString("en-GB", { weekday: "short" });
 }
 
 function formatKSH(n: number) {
@@ -598,6 +603,9 @@ export default function AdminDashboard() {
                 ) : (
                   filteredBookings.map((b: any, idx: number) => {
                     const s = getStatus(b.status);
+                    // Sessions after midnight are filed under the evening they belong
+                    // to; the admin sees the date they really happen on.
+                    const when = describeSession(b.date, b.time);
                     const isLast = idx === filteredBookings.length - 1;
                     return (
                       <tr
@@ -609,10 +617,13 @@ export default function AdminDashboard() {
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span className="text-[13px] font-bold text-[#121e34]">
-                            {formatDate(b.date)}
+                            {formatDate(when.date)}
                           </span>
                           <span className="block text-[11px] mt-0.5 font-mono font-medium text-[#1f4b50]/70">
                             {b.time}
+                            {when.startsNextDay && (
+                              <span className="font-sans"> · {weekdayOf(b.date)} night</span>
+                            )}
                           </span>
                         </td>
 
