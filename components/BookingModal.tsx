@@ -1,8 +1,9 @@
 "use client";
 
 import { KSH, PITCH_OPTIONS, priceFor, SESSION_LENGTHS } from "@/lib/booking";
+import { monthName } from "@/lib/members";
 import { clock12, describeSession, formatWindows, type ScheduleWindow } from "@/lib/schedule";
-import { BookingFormData, BookingRecord, DayInfo, PitchType, SessionLength, TimeSlot } from "@/lib/types";
+import { BookingFormData, BookingRecord, DayInfo, PitchType, Quote, SessionLength, TimeSlot } from "@/lib/types";
 import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { Field } from "./Field";
@@ -36,6 +37,10 @@ interface BookingSheetProps {
   windows: ScheduleWindow[];
   /** The picked session has started or is about to, so it can no longer be paid for. */
   slotClosed: boolean;
+  /** What the API says this booking costs for the number typed, once there is one. */
+  quote: Quote | undefined;
+  /** A price check for the number typed is on its way. */
+  quoteLoading: boolean;
   slotStatuses: BookingRecord[];
   duration: SessionLength;
   onDurationChange: (minutes: SessionLength) => void;
@@ -58,6 +63,8 @@ export default function BookingSheet({
   currentSlots,
   windows,
   slotClosed,
+  quote,
+  quoteLoading,
   slotStatuses,
   duration,
   onDurationChange,
@@ -240,7 +247,10 @@ export default function BookingSheet({
     const pitch = PITCH_OPTIONS.find((p) => p.type === selectedPitchType)!;
     const accentColor = pitch.type === "5Aside" ? "#88b03f" : "#1f4b50";
     const length = SESSION_LENGTHS.find((l) => l.minutes === selectedSlot.minutes)!;
-    const total = priceFor(pitch.type, selectedSlot.minutes);
+    // The standard price until the API has priced this booking for the number typed.
+    const total = quote?.amount ?? priceFor(pitch.type, selectedSlot.minutes);
+    const member = quote?.member;
+    const memberPriceApplied = !!quote && !!member?.applied && quote.amount < quote.listPrice;
     const when = describeSession(selectedDate.fullDateStr, selectedSlot.timeRange);
 
     return (
@@ -325,17 +335,50 @@ export default function BookingSheet({
               error={errors.phoneNumber}
             />
 
-            <div className="flex items-center justify-between rounded-xl border border-[#121e34]/10 bg-[#F8F5F2] px-4 py-3">
-              <span className="text-[11px] font-semibold uppercase tracking-widest text-[#2c2825]/70">
-                Total · {length.short}
-              </span>
-              <span className="text-base font-bold tabular-nums text-[#121e34]">{KSH(total)}</span>
+            <div className="rounded-xl border border-[#121e34]/10 bg-[#F8F5F2] px-4 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[11px] font-semibold uppercase tracking-widest text-[#2c2825]/70">
+                  Total · {length.short}
+                </span>
+                <span className="flex items-baseline gap-2">
+                  {memberPriceApplied && quote && (
+                    <>
+                      <s aria-hidden="true" className="text-xs font-semibold tabular-nums text-[#121e34]/60">
+                        {KSH(quote.listPrice)}
+                      </s>
+                      <span className="sr-only">Standard price {KSH(quote.listPrice)}, member price</span>
+                    </>
+                  )}
+                  <span data-testid="booking-total" className="text-base font-bold tabular-nums text-[#121e34]">
+                    {KSH(total)}
+                  </span>
+                </span>
+              </div>
+              <div aria-live="polite">
+                {quoteLoading && !quote && (
+                  <p className="mt-2 text-[11px] font-medium text-[#1f4b50]">Checking for a member price…</p>
+                )}
+                {member && memberPriceApplied && (
+                  <p className="mt-2 text-xs font-semibold text-[#3f6212]">
+                    <span className="mr-1.5 inline-block rounded-full bg-[#88b03f]/25 px-2 py-0.5 text-[11px] font-bold">
+                      Member price · {member.percent}% off
+                    </span>
+                    Session {member.used + 1} of {member.limit} at the member price in {monthName(member.month)}.
+                  </p>
+                )}
+                {member && !member.applied && (
+                  <p className="mt-2 text-xs font-medium text-[#7a4a00]">
+                    You have used all {member.limit} member-price sessions for {monthName(member.month)}, so this
+                    session is at the standard price.
+                  </p>
+                )}
+              </div>
             </div>
 
             <div className="pt-3 space-y-3">
               <button
                 type="submit"
-                disabled={isBusy || slotClosed}
+                disabled={isBusy || slotClosed || quoteLoading}
                 className="w-full flex items-center h-12 justify-center gap-2.5 rounded-full font-semibold text-[14px] text-white transition-all duration-300 focus:outline-none relative group overflow-hidden shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-70 bg-[#88b03f] hover:bg-[#769a35]"
               >
                 <div className="absolute top-0 left-0 w-full h-[1px] bg-white/20 group-hover:bg-white/30" />
@@ -343,7 +386,13 @@ export default function BookingSheet({
                 {(isSubmitting || isWaiting) && <Spinner />}
                 
                 <span className="z-10 tracking-wide">
-                  {isSubmitting ? "Sending STK Push…" : isWaiting ? "Awaiting M-Pesa PIN…" : "Confirm & Pay"}
+                  {isSubmitting
+                    ? "Sending STK Push…"
+                    : isWaiting
+                      ? "Awaiting M-Pesa PIN…"
+                      : quoteLoading
+                        ? "Checking price…"
+                        : "Confirm & Pay"}
                 </span>
               </button>
 

@@ -4,9 +4,9 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-import { fetchBookings, fetchSchedule, initiateBooking } from "@/lib/api";
+import { fetchBookings, fetchQuote, fetchSchedule, initiateBooking } from "@/lib/api";
 import type { BookingFormData, DayInfo, PitchType, SessionLength, TimeSlot } from "@/lib/types";
-import { DEFAULT_SESSION_LENGTH } from "@/lib/booking";
+import { DEFAULT_SESSION_LENGTH, KSH } from "@/lib/booking";
 import {
   buildDays,
   currentOperatingDate,
@@ -97,6 +97,27 @@ export default function PitchBooking({
     refetchInterval: 3_000,
   });
 
+  // What this booking costs for the number being paid from. A member's number
+  // gets the member price on the sessions it covers; the API decides that, and
+  // works the price out again when the booking is made, so this only shows it.
+  const phoneReady = /^[17]\d{8}$/.test(formData.phoneNumber);
+  const { data: quote, isLoading: quoteLoading } = useQuery({
+    queryKey: ["quote", pickedDay?.fullDateStr, selectedSlot?.timeRange, selectedPitchType, formData.phoneNumber],
+    queryFn: () =>
+      fetchQuote({
+        phoneNumber: `254${formData.phoneNumber}`,
+        date: pickedDay!.fullDateStr,
+        timeRange: selectedSlot!.timeRange,
+        pitchType: selectedPitchType!,
+      }),
+    enabled: !!pickedDay && !!selectedSlot && !!selectedPitchType && phoneReady,
+    staleTime: 20_000,
+    retry: 1,
+    // The price on screen must not change while the customer is switching to M-Pesa
+    // and back. If it has really changed, the API says so when they pay.
+    refetchOnWindowFocus: false,
+  });
+
   const [txReference, setTxReference] = useState<string | null>(null);
 
   const { status: paymentStatus } = usePaymentWebSocket(txReference);
@@ -116,6 +137,8 @@ export default function PitchBooking({
       setSelectedPitchType(null);
 
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      // That session now counts towards a member's discounted sessions for the month.
+      queryClient.invalidateQueries({ queryKey: ["quote"] });
 
     } else if (paymentStatus === "Failed") {
       toast.error("Payment failed or was cancelled.", {
@@ -123,6 +146,7 @@ export default function PitchBooking({
         duration: 5000,
       });
       setTxReference(null);
+      queryClient.invalidateQueries({ queryKey: ["quote"] });
     }
   }, [paymentStatus, txReference, queryClient]);
 
@@ -131,16 +155,18 @@ export default function PitchBooking({
     onSuccess: (data) => {
       if (data && data.reference) {
         setTxReference(data.reference);   
-        toast.loading("Check your phone and enter M-Pesa PIN", {
-          id: "payment-toast",
-        });
-       
+        toast.loading(
+          `Check your phone and enter M-Pesa PIN${typeof data.amount === "number" ? ` (${KSH(data.amount)})` : ""}`,
+          { id: "payment-toast" },
+        );
       } else {
         toast.error("Invalid response from server");
       }
     },
     onError: (err: Error) => {
-      toast.error(`${err}`);
+      toast.error(err.message);
+      // If the price had changed, show the new one.
+      queryClient.invalidateQueries({ queryKey: ["quote"] });
     },
   });
 
@@ -192,6 +218,9 @@ export default function PitchBooking({
       date: pickedDay.fullDateStr,
       timeRange: selectedSlot.timeRange,
       pitchType: selectedPitchType,
+      // The price on screen. If it is no longer the price, the API says so
+      // instead of charging an amount the customer has not seen.
+      expectedAmount: quote?.amount,
     });
   };
 
@@ -199,6 +228,7 @@ export default function PitchBooking({
     setTxReference(null);
     setIsModalOpen(false);
     toast.dismiss("payment-toast");
+    queryClient.invalidateQueries({ queryKey: ["quote"] });
   };
 
   return (
@@ -262,6 +292,8 @@ export default function PitchBooking({
         currentSlots={currentSlots}
         windows={schedule && selectedDate ? schedule.kinds[selectedDate.kind].windows : []}
         slotClosed={slotClosed}
+        quote={quote}
+        quoteLoading={quoteLoading}
         slotStatuses={Array.isArray(slotStatuses) ? slotStatuses : []}
         duration={duration}
         onDurationChange={setDuration}

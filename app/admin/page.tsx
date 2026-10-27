@@ -9,6 +9,7 @@ import { describeSession, localDate } from "@/lib/schedule";
 import Link from "next/link";
 import Image from "next/image";
 import CampRegistrationsPanel from "@/components/admin/CampRegistrationsPanel";
+import MembersPanel from "@/components/admin/MembersPanel";
 
 function formatDate(raw: string) {
   try {
@@ -247,6 +248,7 @@ function LoginScreen({
 
 const TABS = [
   ["bookings", "Pitch bookings"],
+  ["members", "Members"],
   ["camp", "Holiday camp"],
 ] as const;
 
@@ -259,7 +261,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "Confirmed" | "Pending" | "Failed"
   >("all");
-  const [tab, setTab] = useState<"bookings" | "camp">("bookings");
+  const [tab, setTab] = useState<"bookings" | "members" | "camp">("bookings");
 
   const {
     data: bookings = [],
@@ -280,8 +282,10 @@ export default function AdminDashboard() {
     );
     const pending = bookings.filter((b: any) => b.status === "Pending");
     const failed = bookings.filter((b: any) => b.status === "Failed");
+    // What each booking was charged. Rows from before prices were recorded have
+    // no amount and were all sold at the old flat prices.
     const revenue = confirmed.reduce(
-      (sum: number, b: any) => sum + (b.pitchType === "8Aside" ? 8_000 : 5_000),
+      (sum: number, b: any) => sum + (Number(b.amount) || (b.pitchType === "8Aside" ? 8_000 : 5_000)),
       0,
     );
     return {
@@ -468,6 +472,10 @@ export default function AdminDashboard() {
           <div role="tabpanel" id="panel-camp" aria-labelledby="tab-camp">
             <CampRegistrationsPanel />
           </div>
+        ) : tab === "members" ? (
+          <div role="tabpanel" id="panel-members" aria-labelledby="tab-members">
+            <MembersPanel />
+          </div>
         ) : (
           <div role="tabpanel" id="panel-bookings" aria-labelledby="tab-bookings">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
@@ -566,10 +574,10 @@ export default function AdminDashboard() {
               scrollbarColor: "rgba(18,30,52,0.1) transparent",
             }}
           >
-            <table className="w-full text-left border-collapse" style={{ minWidth: 780 }}>
+            <table className="w-full text-left border-collapse" style={{ minWidth: 900 }}>
               <thead>
                 <tr className="border-b border-[#121e34]/10 bg-[#F8F5F2]">
-                  {["Date & Time", "Pitch", "Team / Rep", "Phone", "Status"].map((h) => (
+                  {["Date & Time", "Pitch", "Team / Rep", "Phone", "Amount", "Status"].map((h) => (
                     <th
                       key={h}
                       className="px-6 py-4 text-[10px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70"
@@ -583,7 +591,7 @@ export default function AdminDashboard() {
               <tbody>
                 {isLoading ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-16 text-center">
+                    <td colSpan={6} className="px-6 py-16 text-center">
                       <div className="flex items-center justify-center gap-2.5 text-[#1f4b50]/60">
                         <Spinner size={18} />
                         <span className="text-sm font-semibold">Loading bookings…</span>
@@ -592,7 +600,7 @@ export default function AdminDashboard() {
                   </tr>
                 ) : filteredBookings.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-16 text-center">
+                    <td colSpan={6} className="px-6 py-16 text-center">
                       <p className="text-sm font-bold text-[#1f4b50]/60">
                         {searchTerm || statusFilter !== "all"
                           ? "No bookings match your filters."
@@ -650,6 +658,26 @@ export default function AdminDashboard() {
                           <span className="font-mono font-semibold text-[12px] text-[#1f4b50]/80">
                             {b.phoneNumber || "—"}
                           </span>
+                        </td>
+
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {Number(b.amount) > 0 ? (
+                            <>
+                              <span className="block text-[13px] font-bold tabular-nums text-[#121e34]">
+                                {formatKSH(Number(b.amount))}
+                              </span>
+                              {b.discount === "member" && (
+                                <span className="mt-1 inline-block rounded-full bg-[#88b03f]/20 px-2 py-0.5 text-[10px] font-bold text-[#3f6212]">
+                                  Member price
+                                  {Number(b.listAmount) > 0 && (
+                                    <span className="font-semibold"> · list {formatKSH(Number(b.listAmount))}</span>
+                                  )}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-[12px] font-semibold text-[#1f4b50]/50">—</span>
+                          )}
                         </td>
 
                         <td className="px-6 py-4">

@@ -91,6 +91,48 @@ export interface BookingPayload extends BookingFormData {
   date: string;
   timeRange: string;
   pitchType: PitchType;
+  /**
+   * The price the customer was shown. When it is sent and the price has since
+   * changed, the API refuses the booking instead of charging a different amount.
+   */
+  expectedAmount?: number;
+}
+
+/** What POST /quote asks about: the booking about to be made and who is paying. */
+export interface QuotePayload {
+  phoneNumber: string;
+  date: string;
+  timeRange: string;
+  pitchType: PitchType;
+}
+
+/** What the API says a booking will cost. The server decides; this only shows it. */
+export interface Quote {
+  /** What will be charged, in whole KES. */
+  amount: number;
+  /** The standard price. */
+  listPrice: number;
+  /** Present only for a member, on a session the member price covers. */
+  member?: MemberQuote;
+}
+
+export interface MemberQuote {
+  /** The discount, as a percentage. */
+  percent: number;
+  /** False once the member has used the month's discounted sessions. */
+  applied: boolean;
+  /** The month the session falls in, "2026-11". */
+  month: string;
+  /** Member-priced sessions already held in that month, not counting this one. */
+  used: number;
+  limit: number;
+}
+
+/** A started booking: the reference to follow the payment, and what is being charged. */
+export interface InitiateResponse {
+  reference: string;
+  amount?: number;
+  discount?: string;
 }
 
 export type SlotStatusMap = Record<string, BookingStatus>;
