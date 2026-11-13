@@ -7,8 +7,10 @@ export { parseRange };
 const CAPACITY = 2;
 const UNITS: Record<PitchType, number> = { "5Aside": 1, "8Aside": 2 };
 
-// "Booked" is a paid booking, "Confirmed" only appears in older rows.
-const HOLDING = new Set(["Pending", "Booked", "Confirmed"]);
+// "Booked" is a paid booking, "Confirmed" only appears in older rows, and
+// "Blocked" is a session the admin has taken off the page. Blocked counts as paid:
+// it never lapses, so it is shown as booked rather than "pending".
+const HOLDING = new Set(["Pending", "Booked", "Confirmed", "Blocked"]);
 
 interface Occupancy {
   start: number;

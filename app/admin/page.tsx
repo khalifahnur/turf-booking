@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import CampRegistrationsPanel from "@/components/admin/CampRegistrationsPanel";
 import MembersPanel from "@/components/admin/MembersPanel";
+import BlocksPanel from "@/components/admin/BlocksPanel";
 
 function formatDate(raw: string) {
   try {
@@ -249,6 +250,7 @@ function LoginScreen({
 const TABS = [
   ["bookings", "Pitch bookings"],
   ["members", "Members"],
+  ["blocks", "Blocked sessions"],
   ["camp", "Holiday camp"],
 ] as const;
 
@@ -261,7 +263,7 @@ export default function AdminDashboard() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "Confirmed" | "Pending" | "Failed"
   >("all");
-  const [tab, setTab] = useState<"bookings" | "members" | "camp">("bookings");
+  const [tab, setTab] = useState<(typeof TABS)[number][0]>("bookings");
 
   const {
     data: bookings = [],
@@ -427,7 +429,9 @@ export default function AdminDashboard() {
         <div
           role="tablist"
           aria-label="Dashboard sections"
-          className="mb-8 inline-flex items-center gap-1.5 rounded-xl border border-[#121e34]/10 bg-white p-1 shadow-sm"
+          // max-w-full + overflow-x-auto: with four tabs the strip is wider than a phone, so it
+          // scrolls inside itself instead of making the whole page scroll sideways.
+          className="mb-8 inline-flex max-w-full items-center gap-1.5 overflow-x-auto rounded-xl border border-[#121e34]/10 bg-white p-1 shadow-sm"
           onKeyDown={(e) => {
             // Arrow keys, Home and End move between tabs, as in the ARIA tabs pattern.
             // With a modifier held they belong to the browser (Alt+Left is Back).
@@ -457,7 +461,7 @@ export default function AdminDashboard() {
               aria-controls={tab === key ? `panel-${key}` : undefined}
               tabIndex={tab === key ? 0 : -1}
               onClick={() => setTab(key)}
-              className="rounded-lg px-4 py-2 text-[13px] font-bold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-1"
+              className="shrink-0 whitespace-nowrap rounded-lg px-4 py-2 text-[13px] font-bold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-1"
               style={{
                 backgroundColor: tab === key ? "#1f4b50" : "transparent",
                 color: tab === key ? "#ffffff" : "#1f4b50",
@@ -475,6 +479,10 @@ export default function AdminDashboard() {
         ) : tab === "members" ? (
           <div role="tabpanel" id="panel-members" aria-labelledby="tab-members">
             <MembersPanel />
+          </div>
+        ) : tab === "blocks" ? (
+          <div role="tabpanel" id="panel-blocks" aria-labelledby="tab-blocks">
+            <BlocksPanel />
           </div>
         ) : (
           <div role="tabpanel" id="panel-bookings" aria-labelledby="tab-bookings">
