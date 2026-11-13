@@ -1,4 +1,5 @@
 import type { CampRegistrationPayload, CampRegistrationRecord } from "@/lib/camp";
+import { isBlockList, isBlockResult, type BlockRecord, type BlockRequest, type BlockResult } from "@/lib/blocks";
 import { isMemberList, isQuote, type MemberList, type MemberRecord } from "@/lib/members";
 import { isSchedule, type Schedule } from "@/lib/schedule";
 import type { BookingPayload, InitiateResponse, Quote, QuotePayload } from "@/lib/types";
@@ -168,4 +169,42 @@ export const addMemberAdmin = async (member: { fullName: string; phoneNumber: st
 export const removeMemberAdmin = async (phoneNumber: string): Promise<void> => {
   const res = await fetch(`/api/admin/members/${encodeURIComponent(phoneNumber)}`, { method: "DELETE" });
   if (!res.ok) throw await adminError(res, "Failed to remove the member");
+};
+
+// Sessions the admin blocks. Like the member list these go through our own route,
+// which checks the admin session and holds the API key.
+
+export const fetchBlocksAdmin = async (): Promise<BlockRecord[]> => {
+  const res = await fetch("/api/admin/blocks", { cache: "no-store" });
+  if (!res.ok) throw await adminError(res, "Failed to load the blocked sessions");
+  const list: unknown = await res.json();
+  if (!isBlockList(list)) throw new Error("Failed to load the blocked sessions");
+  return list.blocks;
+};
+
+/** Blocks one session on each of the dates; the result says which dates were taken. */
+export const createBlocksAdmin = async (request: BlockRequest): Promise<BlockResult> => {
+  const res = await fetch("/api/admin/blocks", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+  if (!res.ok) throw await adminError(res, "Failed to block the sessions");
+  const result: unknown = await res.json();
+  if (!isBlockResult(result)) throw new Error("Failed to block the sessions");
+  return result;
+};
+
+export const removeBlockAdmin = async (id: string): Promise<void> => {
+  const res = await fetch(`/api/admin/blocks/${encodeURIComponent(id)}`, { method: "DELETE" });
+  if (!res.ok) throw await adminError(res, "Failed to unblock the session");
+};
+
+/** Lifts every session of a series from today on; resolves to how many there were. */
+export const removeBlockSeriesAdmin = async (seriesId: string): Promise<number> => {
+  const res = await fetch(`/api/admin/block-series/${encodeURIComponent(seriesId)}`, { method: "DELETE" });
+  if (!res.ok) throw await adminError(res, "Failed to unblock the sessions");
+  const body: unknown = await res.json().catch(() => null);
+  const removed = (body as { removed?: unknown } | null)?.removed;
+  return typeof removed === "number" ? removed : 0;
 };
