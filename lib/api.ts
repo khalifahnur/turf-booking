@@ -1,6 +1,16 @@
 import type { CampRegistrationPayload, CampRegistrationRecord } from "@/lib/camp";
 import { isBlockList, isBlockResult, type BlockRecord, type BlockRequest, type BlockResult } from "@/lib/blocks";
 import { isMemberList, isQuote, type MemberList, type MemberRecord } from "@/lib/members";
+import {
+  isAcademyAdminData,
+  isTournamentAdminData,
+  isTournamentInfo,
+  type AcademyAdminData,
+  type StartedRegistration,
+  type TournamentAdminData,
+  type TournamentInfo,
+  type TournamentPayload,
+} from "@/lib/tournament";
 import { isSchedule, type Schedule } from "@/lib/schedule";
 import type { BookingPayload, InitiateResponse, Quote, QuotePayload } from "@/lib/types";
 
@@ -207,4 +217,75 @@ export const removeBlockSeriesAdmin = async (seriesId: string): Promise<number> 
   const body: unknown = await res.json().catch(() => null);
   const removed = (body as { removed?: unknown } | null)?.removed;
   return typeof removed === "number" ? removed : 0;
+};
+
+// ---- the tournament ---------------------------------------------------------------
+
+/** A failed tournament registration; `message` is safe to show on the form as it is. */
+export class RegistrationApiError extends Error {
+  constructor(
+    message: string,
+    readonly status: number | null,
+  ) {
+    super(message);
+    this.name = "RegistrationApiError";
+  }
+}
+
+const REGISTRATION_UNREACHABLE =
+  "We couldn't reach the registration service. Please check your connection and try again. If an M-Pesa prompt arrives, you can still enter your PIN and we'll confirm by SMS.";
+export const REGISTRATION_FAILED =
+  "We couldn't start your registration just now. Please try again in a moment. If an M-Pesa prompt arrives, you can still enter your PIN and we'll confirm by SMS.";
+
+/** The fee, the limits and how many places each category has left. Names nobody. */
+export const fetchTournamentInfo = async (): Promise<TournamentInfo> => {
+  const res = await fetch(`${BASE_URL}/tournament`, { cache: "no-store" });
+  if (!res.ok) throw new Error("Failed to load the tournament");
+  const info: unknown = await res.json();
+  if (!isTournamentInfo(info)) throw new Error("Failed to load the tournament");
+  return info;
+};
+
+/** Starts a tournament registration: checks it, holds the places and sends the M-Pesa prompt. */
+export const registerTournament = async (payload: TournamentPayload): Promise<StartedRegistration> => {
+  let res: Response;
+  try {
+    res = await fetch(`${BASE_URL}/tournament/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    throw new RegistrationApiError(REGISTRATION_UNREACHABLE, null);
+  }
+  if (!res.ok) {
+    throw new RegistrationApiError(await errorMessage(res, REGISTRATION_FAILED), res.status);
+  }
+  try {
+    const body = await res.json();
+    if (typeof body?.reference !== "string" || typeof body?.total !== "number") throw new Error("bad body");
+    return { reference: body.reference, total: body.total };
+  } catch {
+    // The prompt may well have been sent; do not show a parsing error.
+    throw new RegistrationApiError(REGISTRATION_FAILED, res.status);
+  }
+};
+
+// Like the other admin calls, these go through our own routes, which check the
+// admin session and hold the API key.
+
+export const fetchTournamentAdmin = async (): Promise<TournamentAdminData> => {
+  const res = await fetch("/api/admin/tournament", { cache: "no-store" });
+  if (!res.ok) throw await adminError(res, "Failed to load the tournament registrations");
+  const data: unknown = await res.json();
+  if (!isTournamentAdminData(data)) throw new Error("Failed to load the tournament registrations");
+  return data;
+};
+
+export const fetchAcademyAdmin = async (): Promise<AcademyAdminData> => {
+  const res = await fetch("/api/admin/academy", { cache: "no-store" });
+  if (!res.ok) throw await adminError(res, "Failed to load the academy registrations");
+  const data: unknown = await res.json();
+  if (!isAcademyAdminData(data)) throw new Error("Failed to load the academy registrations");
+  return data;
 };
