@@ -194,9 +194,13 @@ export function cleanName(raw: string): string {
 }
 
 export function nameError(raw: string, who: "child" | "parent"): string | undefined {
+  return nameProblem(raw, who === "child" ? "child's full name" : "parent or guardian's full name");
+}
+
+/** What is wrong with a name typed into a form, or undefined. `what` reads "the academy name" after "Enter". */
+export function nameProblem(raw: string, what: string): string | undefined {
   const name = cleanName(raw);
-  const subject = who === "child" ? "child's" : "parent or guardian's";
-  if (!name) return `Enter the ${subject} full name`;
+  if (!name) return `Enter the ${what}`;
   const length = [...name].length;
   if (length < 2 || length > 60) return "Use between 2 and 60 characters";
   if (!NAME_PATTERN.test(name) || INVISIBLE_FILLER.test(name) || /\p{M}{3,}/u.test(name)) {

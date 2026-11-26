@@ -1,7 +1,12 @@
 import { PaymentStatus, PaymentWSMessage } from "@/lib/payment";
 import { useState, useEffect, useRef } from "react";
 
-export const usePaymentWebSocket = (reference: string | null) => {
+/**
+ * Follows a payment over the WebSocket. If nothing is heard for `timeoutMs` the
+ * payment is reported as failed (the default is two minutes, which is how long an
+ * M-Pesa prompt is worth waiting for).
+ */
+export const usePaymentWebSocket = (reference: string | null, timeoutMs = 120000) => {
   const [status, setStatus] = useState<PaymentStatus>("Idle");
   const ws = useRef<WebSocket | null>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -22,7 +27,7 @@ export const usePaymentWebSocket = (reference: string | null) => {
         if (ws.current && ws.current.readyState === WebSocket.OPEN) {
           ws.current.close();
         }
-      }, 120000);
+      }, timeoutMs);
     };
 
     ws.current.onmessage = (event) => {
@@ -61,7 +66,7 @@ export const usePaymentWebSocket = (reference: string | null) => {
         ws.current.close();
       }
     };
-  }, [reference]);
+  }, [reference, timeoutMs]);
 
   return { status };
 };

@@ -93,6 +93,7 @@ export default function FooterSection() {
               {[
                 { label: "Football Pitch", href: "#" },
                 { label: "Holiday Camp", href: "/camp" },
+                { label: "Tournament", href: "/tournament" },
               ].map((link) => (
                 <li key={link.label}>
                   <a

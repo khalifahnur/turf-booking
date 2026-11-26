@@ -11,6 +11,8 @@ import Image from "next/image";
 import CampRegistrationsPanel from "@/components/admin/CampRegistrationsPanel";
 import MembersPanel from "@/components/admin/MembersPanel";
 import BlocksPanel from "@/components/admin/BlocksPanel";
+import TournamentPanel from "@/components/admin/TournamentPanel";
+import AcademyPanel from "@/components/admin/AcademyPanel";
 
 function formatDate(raw: string) {
   try {
@@ -252,6 +254,8 @@ const TABS = [
   ["members", "Members"],
   ["blocks", "Blocked sessions"],
   ["camp", "Holiday camp"],
+  ["tournament", "Tournament"],
+  ["academy", "Academy"],
 ] as const;
 
 export default function AdminDashboard() {
@@ -483,6 +487,14 @@ export default function AdminDashboard() {
         ) : tab === "blocks" ? (
           <div role="tabpanel" id="panel-blocks" aria-labelledby="tab-blocks">
             <BlocksPanel />
+          </div>
+        ) : tab === "tournament" ? (
+          <div role="tabpanel" id="panel-tournament" aria-labelledby="tab-tournament">
+            <TournamentPanel />
+          </div>
+        ) : tab === "academy" ? (
+          <div role="tabpanel" id="panel-academy" aria-labelledby="tab-academy">
+            <AcademyPanel />
           </div>
         ) : (
           <div role="tabpanel" id="panel-bookings" aria-labelledby="tab-bookings">
