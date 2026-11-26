@@ -96,7 +96,7 @@ export default function TournamentPanel() {
         <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight text-[#121e34]">Tournament</h1>
         <p className="mt-1 max-w-2xl text-sm font-medium text-[#1f4b50]/80">
           Teams registered for the tournament (youth U10 and U15, and adults), first come first place.
-          {data && <> {formatKes(data.fee)} per registration.</>}
+          {data && <> {formatKes(data.feePerCategory)} for each category a team enters.</>}
           {updatedLabel && <> · Updated {updatedLabel}</>}
         </p>
       </div>
@@ -119,7 +119,7 @@ export default function TournamentPanel() {
             {stats.refunds.map((r, i) => (
               <span key={r.id}>
                 {i > 0 && ", "}
-                <strong>{r.academyName}</strong> ({phoneLabel(r.phoneNumber)})
+                <strong>{r.academyName}</strong> ({phoneLabel(r.phoneNumber)}, refund {formatKes(r.overflow.length * (data?.feePerCategory ?? 0))})
               </span>
             ))}
             .
@@ -274,7 +274,8 @@ export default function TournamentPanel() {
                       <StatusBadge status={r.status} />
                       {r.overflow.length > 0 && (
                         <span className="mt-1.5 block text-[11px] font-bold text-red-700">
-                          No place in {r.overflow.map((o) => o.toUpperCase()).join(" and ")}: refund
+                          No place in {r.overflow.map((o) => (o === "adults" ? "Adults" : o.toUpperCase())).join(" and ")}: refund{" "}
+                          {formatKes(r.overflow.length * (data?.feePerCategory ?? 0))}
                         </span>
                       )}
                     </td>

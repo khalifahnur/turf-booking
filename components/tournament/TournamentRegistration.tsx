@@ -20,7 +20,7 @@ import PaymentFlow from "./PaymentFlow";
 
 // What the API enforces today, used only until it has answered (and if it never
 // does, in which case registering fails anyway).
-const FALLBACK = { fee: 2_000, minPlayers: 5, maxPlayers: 40, holdMinutes: 3, categories: DEFAULT_CATEGORIES };
+const FALLBACK = { feePerCategory: 2_000, minPlayers: 5, maxPlayers: 40, holdMinutes: 3, categories: DEFAULT_CATEGORIES };
 const CATEGORY_ORDER: { id: TournamentCategoryId; label: string }[] = [
   { id: "u10", label: "U10" },
   { id: "u15", label: "U15" },
@@ -91,7 +91,9 @@ export default function TournamentRegistration() {
   const selected = CATEGORY_ORDER.filter((c) => categories.includes(c.id) && !full.has(c.id));
 
   const phoneLabel = formatPhone(phone);
-  const fee = limits.fee;
+  // What the server will charge: the fee for each category chosen.
+  const fee = limits.feePerCategory;
+  const total = fee * selected.length;
   const chosenLabels = selected.map((c) => c.label);
 
   const toggle = (id: TournamentCategoryId) => {
@@ -160,7 +162,7 @@ export default function TournamentRegistration() {
             key={reference}
             reference={reference}
             name={placed.name}
-            total={charged ?? fee}
+            total={charged ?? total}
             phoneLabel={phoneLabel}
             places={placed.categories.map((id) => CATEGORY_ORDER.find((c) => c.id === id)?.label ?? id)}
             holdMinutes={limits.holdMinutes}
@@ -173,8 +175,8 @@ export default function TournamentRegistration() {
               Register your team
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-[#121e34]/70 sm:text-[13px]">
-              Places are limited in each category and go to whoever registers first. Pay{" "}
-              <strong className="text-[#121e34]">{formatKes(fee)}</strong> by M-Pesa to take yours.
+              Places are limited in each category and go to whoever registers first. The fee is{" "}
+              <strong className="text-[#121e34]">{formatKes(fee)}</strong> for each category, paid by M-Pesa.
             </p>
 
             <PlacesBoard slots={slots} failed={infoFailed && !info} />
@@ -258,7 +260,7 @@ export default function TournamentRegistration() {
                 })}
               </div>
               <p className="ml-1 mt-1.5 text-[11px] text-[#121e34]/65">
-                Entering more than one category is fine: one registration, one fee, a place in each.
+                Enter as many as you like: {formatKes(fee)} and a place for each one you choose.
               </p>
               {errors.categories && (
                 <span id="tournament-categories-error" role="alert" className="mt-1.5 ml-1 block text-[12px] font-medium text-red-700">
@@ -317,14 +319,25 @@ export default function TournamentRegistration() {
               </p>
             )}
 
+            {selected.length > 0 && (
+              <p className="mt-5 flex items-center justify-between gap-3 rounded-xl bg-[#f8f5f2] px-3.5 py-2.5 text-xs text-[#121e34]/80" aria-live="polite">
+                <span>
+                  {selected.length} {selected.length === 1 ? "category" : "categories"} ({chosenLabels.join(", ")}) × {formatKes(fee)}
+                </span>
+                <strong className="text-sm tabular-nums text-[#121e34]">{formatKes(total)}</strong>
+              </p>
+            )}
+
             <button
               type="submit"
               disabled={mutation.isPending}
-              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-full bg-[#88b03f] px-6 text-[13px] font-bold text-[#121e34] shadow-2xs transition-colors hover:bg-[#769a35] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
+              className="mt-3 inline-flex h-11 w-full items-center justify-center rounded-full bg-[#88b03f] px-6 text-[13px] font-bold text-[#121e34] shadow-2xs transition-colors hover:bg-[#769a35] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#1f4b50] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {mutation.isPending
                 ? "Sending the M-Pesa prompt…"
-                : `Pay ${formatKes(fee)} and take ${chosenLabels.length === 1 ? "the place" : chosenLabels.length > 1 ? "the places" : "a place"}`}
+                : selected.length === 0
+                  ? "Choose a category to pay"
+                  : `Pay ${formatKes(total)} and take ${selected.length === 1 ? "the place" : "the places"}`}
             </button>
           </form>
         )}

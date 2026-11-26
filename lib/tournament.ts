@@ -3,7 +3,7 @@ import { formatKes, nameProblem } from "@/lib/camp";
 
 // The K-Arena tournament (youth U10 and U15, and adults) and registration at the St. Sebastian
 // Sports Academy, as the pages and the admin dashboard see them. The booking API
-// decides the fee, how many teams a category takes and who gets a place; the
+// decides the fees, how many teams a category takes and who gets a place; the
 // numbers on the page come from it (GET /tournament), so this file can only ever
 // have wording that is out of date, never a price or a limit that is.
 
@@ -13,7 +13,7 @@ import { formatKes, nameProblem } from "@/lib/camp";
  * wording that was actually shown. Change it together with the rules and with
  * RulesVersion in the Go API (internal/registration/registration.go).
  */
-export const TOURNAMENT_RULES_VERSION = "tournament-2026-v2";
+export const TOURNAMENT_RULES_VERSION = "tournament-2026-v3";
 
 export const TOURNAMENT_NAME = "K-Arena Tournament";
 
@@ -48,7 +48,8 @@ export const DEFAULT_CATEGORIES: TournamentSlot[] = [
 
 /** GET /tournament: the fee, the limits the form applies and the places left. */
 export interface TournamentInfo {
-  fee: number;
+  /** What each category a team enters costs, in KSh. */
+  feePerCategory: number;
   minPlayers: number;
   maxPlayers: number;
   rulesVersion: string;
@@ -81,7 +82,7 @@ export function isTournamentInfo(v: unknown): v is TournamentInfo {
   return (
     !!i &&
     typeof i === "object" &&
-    isNumber(i.fee) &&
+    isNumber(i.feePerCategory) &&
     isNumber(i.minPlayers) &&
     isNumber(i.maxPlayers) &&
     isString(i.rulesVersion) &&
@@ -124,7 +125,7 @@ export interface TournamentRegistrationRecord {
 }
 
 export interface TournamentAdminData {
-  fee: number;
+  feePerCategory: number;
   holdMinutes: number;
   categories: TournamentSlot[];
   registrations: TournamentRegistrationRecord[];
@@ -135,7 +136,7 @@ export function isTournamentAdminData(v: unknown): v is TournamentAdminData {
   return (
     !!d &&
     typeof d === "object" &&
-    isNumber(d.fee) &&
+    isNumber(d.feePerCategory) &&
     isNumber(d.holdMinutes) &&
     Array.isArray(d.categories) &&
     d.categories.every(isSlot) &&
@@ -246,7 +247,7 @@ function placesSentence(categories: TournamentSlot[]): string {
  * TOURNAMENT_RULES_VERSION (here and in the Go API).
  */
 export function tournamentRules(
-  info: Pick<TournamentInfo, "fee" | "minPlayers" | "maxPlayers" | "holdMinutes" | "categories">,
+  info: Pick<TournamentInfo, "feePerCategory" | "minPlayers" | "maxPlayers" | "holdMinutes" | "categories">,
 ): Rule[] {
   const categories = info.categories.length > 0 ? info.categories : DEFAULT_CATEGORIES;
   return [
@@ -260,11 +261,11 @@ export function tournamentRules(
     },
     {
       title: "One team per academy in each category",
-      body: "An academy or club may enter one team in each category. To enter more than one category, tick them all in a single registration: you pay one fee and take one place in each.",
+      body: "An academy or club may enter one team in each category. To enter more than one category, tick them all in a single registration: you pay the fee for each category and take one place in each.",
     },
     {
       title: "Registration fee",
-      body: `The registration fee is ${formatKes(info.fee)} per registration, whether you enter one category or several. It is paid in full by M-Pesa when you register. A confirmation SMS is sent to the number you pay from. Refunds and changes are at the discretion of management, except that if you paid for a place that had already gone to another team (for example, a payment that arrived after your ${info.holdMinutes} minutes were up), we will refund you in full.`,
+      body: `The registration fee is ${formatKes(info.feePerCategory)} for each category you enter: ${formatKes(info.feePerCategory)} for one, ${formatKes(info.feePerCategory * 2)} for two, and so on. It is paid in full by M-Pesa when you register. A confirmation SMS is sent to the number you pay from. Refunds and changes are at the discretion of management, except that if you paid for a place that had already gone to another team (for example, a payment that arrived after your ${info.holdMinutes} minutes were up), we will refund you in full the fee for that place.`,
     },
     {
       title: "Squads",
