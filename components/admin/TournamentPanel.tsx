@@ -167,7 +167,7 @@ export default function TournamentPanel() {
                     {c.paid} of {open} confirmed
                   </>
                 )}
-                {c.reserved > 0 && <> · {c.reserved} taken by SSSA</>}
+                {c.reserved > 0 && <> · {c.reserved} taken directly (not on the website)</>}
                 {c.held > 0 && <> · {c.held} paying now (held for {data?.holdMinutes ?? 3} minutes)</>}
               </p>
             </div>

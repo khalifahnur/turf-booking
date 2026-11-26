@@ -13,7 +13,7 @@ import { formatKes, nameProblem } from "@/lib/camp";
  * wording that was actually shown. Change it together with the rules and with
  * RulesVersion in the Go API (internal/registration/registration.go).
  */
-export const TOURNAMENT_RULES_VERSION = "tournament-2026-v3";
+export const TOURNAMENT_RULES_VERSION = "tournament-2026-v4";
 
 export const TOURNAMENT_NAME = "K-Arena Tournament";
 
@@ -29,7 +29,7 @@ export interface TournamentSlot {
   group: TournamentGroup;
   /** Every team the category takes. */
   capacity: number;
-  /** Places among them already taken by the academy's own teams, not sold here. */
+  /** Places among them already taken by teams registered directly with the organisers, not sold here. */
   reserved: number;
   /** Teams that have paid. */
   paid: number;
@@ -43,7 +43,7 @@ export interface TournamentSlot {
 export const DEFAULT_CATEGORIES: TournamentSlot[] = [
   { id: "u10", label: "U10", group: "youth", capacity: 4, reserved: 1, paid: 0, held: 0, left: 3 },
   { id: "u15", label: "U15", group: "youth", capacity: 4, reserved: 1, paid: 0, held: 0, left: 3 },
-  { id: "adults", label: "Adults", group: "adults", capacity: 6, reserved: 0, paid: 0, held: 0, left: 6 },
+  { id: "adults", label: "Adults", group: "adults", capacity: 6, reserved: 1, paid: 0, held: 0, left: 5 },
 ];
 
 /** GET /tournament: the fee, the limits the form applies and the places left. */
@@ -231,11 +231,11 @@ export interface Rule {
   body: string;
 }
 
-/** "U10 takes 4 teams (1 already taken by St. Sebastian Sports Academy), U15 takes 4 …, Adults takes 6" */
+/** "U10 takes 4 teams (1 already taken), U15 takes 4 (1 already taken), Adults takes 6 (1 already taken)" */
 function placesSentence(categories: TournamentSlot[]): string {
   return categories
     .map((c) => {
-      const taken = c.reserved > 0 ? ` (${c.reserved} already taken by St. Sebastian Sports Academy)` : "";
+      const taken = c.reserved > 0 ? ` (${c.reserved} already taken by ${c.reserved === 1 ? "a team" : "teams"} registered directly with the organisers)` : "";
       return `${c.label} takes ${c.capacity} teams${taken}`;
     })
     .join("; ");

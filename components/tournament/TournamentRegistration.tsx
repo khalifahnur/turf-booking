@@ -425,7 +425,7 @@ function PlacesBoard({ slots, failed }: { slots: BoardSlot[]; failed: boolean })
                   </div>
                   <p className="sr-only">
                     {slot
-                      ? `${slot.reserved} taken by the academy, ${slot.paid} teams confirmed, ${slot.held} paying, ${slot.left} places left.`
+                      ? `${slot.reserved} taken directly, ${slot.paid} teams confirmed, ${slot.held} paying, ${slot.left} places left.`
                       : words}
                   </p>
                 </div>
@@ -437,8 +437,7 @@ function PlacesBoard({ slots, failed }: { slots: BoardSlot[]; failed: boolean })
       {reserved.length > 0 && (
         <p className="ml-1 flex items-center gap-2 text-[11px] text-[#121e34]/70">
           <span aria-hidden="true" className="h-2.5 w-5 shrink-0 rounded-full bg-[#88b03f]" />
-          St. Sebastian Sports Academy has already taken {reserved.length === 1 ? "a place" : "one place"} in{" "}
-          {reserved.map((r) => r.label).join(" and ")}.
+          Green places are already taken by teams registered directly with the organisers.
         </p>
       )}
     </div>
