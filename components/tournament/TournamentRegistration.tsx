@@ -8,6 +8,7 @@ import { REGISTRATION_FAILED, RegistrationApiError, fetchTournamentInfo, registe
 import { cleanName, formatKes, formatPhone, normalizePhoneInput, phoneError } from "@/lib/camp";
 import { EMAIL, PHONE_DISPLAY, PHONE_TEL } from "@/lib/site";
 import {
+  DEFAULT_CATEGORIES,
   TOURNAMENT_RULES_VERSION,
   academyNameError,
   playersError,
@@ -19,10 +20,11 @@ import PaymentFlow from "./PaymentFlow";
 
 // What the API enforces today, used only until it has answered (and if it never
 // does, in which case registering fails anyway).
-const FALLBACK = { fee: 2_000, teamsPerCategory: 6, minPlayers: 5, maxPlayers: 40, holdMinutes: 3 };
+const FALLBACK = { fee: 2_000, minPlayers: 5, maxPlayers: 40, holdMinutes: 3, categories: DEFAULT_CATEGORIES };
 const CATEGORY_ORDER: { id: TournamentCategoryId; label: string }[] = [
   { id: "u10", label: "U10" },
   { id: "u15", label: "U15" },
+  { id: "adults", label: "Adults" },
 ];
 
 interface Errors {
@@ -61,7 +63,12 @@ export default function TournamentRegistration() {
   const rules = useMemo(() => tournamentRules(limits), [limits]);
   const slots = useMemo(() => {
     const byId = new Map<string, TournamentSlot>((info?.categories ?? []).map((c) => [c.id, c]));
-    return CATEGORY_ORDER.map((c) => ({ ...c, slot: byId.get(c.id) }));
+    // `slot` is what the API says; `shape` is what to draw until it has.
+    return CATEGORY_ORDER.map((c) => ({
+      ...c,
+      slot: byId.get(c.id),
+      shape: byId.get(c.id) ?? DEFAULT_CATEGORIES.find((d) => d.id === c.id)!,
+    }));
   }, [info]);
 
   const mutation = useMutation({
@@ -166,11 +173,11 @@ export default function TournamentRegistration() {
               Register your team
             </h2>
             <p className="mt-1 text-xs leading-relaxed text-[#121e34]/70 sm:text-[13px]">
-              {limits.teamsPerCategory} teams in each category, and places go to whoever registers first. Pay{" "}
+              Places are limited in each category and go to whoever registers first. Pay{" "}
               <strong className="text-[#121e34]">{formatKes(fee)}</strong> by M-Pesa to take yours.
             </p>
 
-            <PlacesBoard slots={slots} capacity={limits.teamsPerCategory} failed={infoFailed && !info} />
+            <PlacesBoard slots={slots} failed={infoFailed && !info} />
 
             <div className="mt-5 grid gap-x-3.5 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -251,7 +258,7 @@ export default function TournamentRegistration() {
                 })}
               </div>
               <p className="ml-1 mt-1.5 text-[11px] text-[#121e34]/65">
-                Playing in both is fine: one registration, one fee, a place in each.
+                Entering more than one category is fine: one registration, one fee, a place in each.
               </p>
               {errors.categories && (
                 <span id="tournament-categories-error" role="alert" className="mt-1.5 ml-1 block text-[12px] font-medium text-red-700">
@@ -343,57 +350,84 @@ export default function TournamentRegistration() {
   );
 }
 
-/** How many of each category's places are taken, as dots and as words. */
-function PlacesBoard({
-  slots,
-  capacity,
-  failed,
-}: {
-  slots: { id: TournamentCategoryId; label: string; slot?: TournamentSlot }[];
-  capacity: number;
-  failed: boolean;
-}) {
+type BoardSlot = { id: TournamentCategoryId; label: string; slot?: TournamentSlot; shape: TournamentSlot };
+
+/** How many of each category's places are taken, as dots and as words, youth first and then adults. */
+function PlacesBoard({ slots, failed }: { slots: BoardSlot[]; failed: boolean }) {
+  const groups = [
+    { name: "Youth", items: slots.filter((s) => s.shape.group === "youth") },
+    { name: "Adults", items: slots.filter((s) => s.shape.group === "adults") },
+  ].filter((g) => g.items.length > 0);
+  const reserved = slots.filter((s) => s.shape.reserved > 0);
+
   return (
-    <div className="mt-4 grid gap-2.5 sm:grid-cols-2" aria-live="polite">
-      {slots.map(({ id, label, slot }) => {
-        const words = !slot
-          ? failed
-            ? "Places left unavailable"
-            : "Checking places…"
-          : slot.left === 0
-            ? `Full${slot.held > 0 ? ": some teams are still paying" : ""}`
-            : `${slot.left} of ${capacity} places left`;
-        return (
-          <div key={id} className="rounded-xl border border-[#121e34]/10 bg-[#f8f5f2] px-3.5 py-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="font-playfair text-sm font-semibold text-[#121e34]">{label}</span>
-              <span
-                className={`text-[11px] font-semibold ${slot && slot.left === 0 ? "text-red-700" : "text-[#1f4b50]"}`}
-              >
-                {words}
-              </span>
-            </div>
-            <div className="mt-2 flex gap-1.5" aria-hidden="true">
-              {Array.from({ length: capacity }, (_, i) => {
-                const paid = slot?.paid ?? 0;
-                const held = slot?.held ?? 0;
-                const state = i < paid ? "paid" : i < paid + held ? "held" : "free";
-                return (
-                  <span
-                    key={i}
-                    className={`h-2.5 flex-1 rounded-full ${
-                      state === "paid" ? "bg-[#1f4b50]" : state === "held" ? "bg-[#fed107]" : "bg-[#121e34]/12"
-                    }`}
-                  />
-                );
-              })}
-            </div>
-            <p className="sr-only">
-              {slot ? `${slot.paid} teams confirmed, ${slot.held} paying, ${slot.left} places left.` : words}
-            </p>
+    <div className="mt-4 space-y-3" aria-live="polite">
+      {groups.map((g) => (
+        <div key={g.name}>
+          <p className="mb-1.5 ml-1 text-[11px] font-semibold uppercase tracking-widest text-[#2c2825]/70">{g.name}</p>
+          <div className="grid gap-2.5 sm:grid-cols-2">
+            {g.items.map(({ id, label, slot, shape }) => {
+              const words = !slot
+                ? failed
+                  ? "Places left unavailable"
+                  : "Checking places…"
+                : slot.left === 0
+                  ? `Full${slot.held > 0 ? ": some teams are still paying" : ""}`
+                  : `${slot.left} ${slot.left === 1 ? "place" : "places"} left`;
+              return (
+                <div key={id} className="rounded-xl border border-[#121e34]/10 bg-[#f8f5f2] px-3.5 py-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="font-playfair text-sm font-semibold text-[#121e34]">{label}</span>
+                    <span className={`text-[11px] font-semibold ${slot && slot.left === 0 ? "text-red-700" : "text-[#1f4b50]"}`}>
+                      {words}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex gap-1.5" aria-hidden="true">
+                    {Array.from({ length: shape.capacity }, (_, i) => {
+                      const paid = slot?.paid ?? 0;
+                      const held = slot?.held ?? 0;
+                      const state =
+                        i < shape.reserved
+                          ? "reserved"
+                          : i < shape.reserved + paid
+                            ? "paid"
+                            : i < shape.reserved + paid + held
+                              ? "held"
+                              : "free";
+                      return (
+                        <span
+                          key={i}
+                          className={`h-2.5 flex-1 rounded-full ${
+                            state === "reserved"
+                              ? "bg-[#88b03f]"
+                              : state === "paid"
+                                ? "bg-[#1f4b50]"
+                                : state === "held"
+                                  ? "bg-[#fed107]"
+                                  : "bg-[#121e34]/12"
+                          }`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <p className="sr-only">
+                    {slot
+                      ? `${slot.reserved} taken by the academy, ${slot.paid} teams confirmed, ${slot.held} paying, ${slot.left} places left.`
+                      : words}
+                  </p>
+                </div>
+              );
+            })}
           </div>
-        );
-      })}
+        </div>
+      ))}
+      {reserved.length > 0 && (
+        <p className="ml-1 flex items-center gap-2 text-[11px] text-[#121e34]/70">
+          <span aria-hidden="true" className="h-2.5 w-5 shrink-0 rounded-full bg-[#88b03f]" />
+          St. Sebastian Sports Academy has already taken {reserved.length === 1 ? "a place" : "one place"} in{" "}
+          {reserved.map((r) => r.label).join(" and ")}.
+        </p>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchTournamentAdmin } from "@/lib/api";
 import { BRAND } from "@/lib/booking";
 import { formatKes, formatPhone } from "@/lib/camp";
-import type { TournamentRegistrationRecord } from "@/lib/tournament";
+import type { TournamentCategoryId, TournamentRegistrationRecord } from "@/lib/tournament";
 
 function phoneLabel(raw: string): string {
   return raw.startsWith("254") && raw.length === 12 ? formatPhone(raw.slice(3)) : raw;
@@ -49,7 +49,7 @@ function StatusBadge({ status }: { status: string }) {
 export default function TournamentPanel() {
   const { font } = BRAND;
   const [search, setSearch] = useState("");
-  const [filter, setFilter] = useState<"all" | "u10" | "u15">("all");
+  const [filter, setFilter] = useState<"all" | TournamentCategoryId>("all");
 
   const { data, isError, dataUpdatedAt } = useQuery({
     queryKey: ["admin-tournament"],
@@ -95,8 +95,8 @@ export default function TournamentPanel() {
       <div className="mb-8">
         <h1 className="text-[1.75rem] font-extrabold leading-tight tracking-tight text-[#121e34]">Tournament</h1>
         <p className="mt-1 max-w-2xl text-sm font-medium text-[#1f4b50]/80">
-          Teams registered for the U10 and U15 tournament, first come first place.
-          {data && <> {formatKes(data.fee)} per registration, {data.teamsPerCategory} teams in each category.</>}
+          Teams registered for the tournament (youth U10 and U15, and adults), first come first place.
+          {data && <> {formatKes(data.fee)} per registration.</>}
           {updatedLabel && <> · Updated {updatedLabel}</>}
         </p>
       </div>
@@ -127,41 +127,54 @@ export default function TournamentPanel() {
         </div>
       )}
 
-      <section aria-label="Places taken" className="mb-8 grid gap-4 sm:grid-cols-2">
-        {(data?.categories ?? []).map((c) => (
-          <div key={c.id} className="rounded-2xl border border-[#121e34]/10 bg-white p-5 shadow-sm">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="text-lg font-extrabold text-[#121e34]">{c.label}</h2>
-              <p className={`text-sm font-bold ${c.left === 0 ? "text-red-700" : "text-[#1f4b50]"}`}>
-                {c.left === 0 ? "Full" : `${c.left} ${c.left === 1 ? "place" : "places"} left`}
+      <section aria-label="Places taken" className="mb-8 grid gap-4 sm:grid-cols-3">
+        {(data?.categories ?? []).map((c) => {
+          const open = c.capacity - c.reserved;
+          return (
+            <div key={c.id} className="rounded-2xl border border-[#121e34]/10 bg-white p-5 shadow-sm">
+              <div className="flex items-baseline justify-between gap-3">
+                <h2 className="text-lg font-extrabold text-[#121e34]">
+                  {c.label}
+                  <span className="ml-2 text-[11px] font-bold uppercase tracking-[0.14em] text-[#1f4b50]/70">{c.group}</span>
+                </h2>
+                <p className={`text-sm font-bold ${c.left === 0 ? "text-red-700" : "text-[#1f4b50]"}`}>
+                  {c.left === 0 ? "Full" : `${c.left} ${c.left === 1 ? "place" : "places"} left`}
+                </p>
+              </div>
+              <div className="mt-3 flex gap-1.5" aria-hidden="true">
+                {Array.from({ length: c.capacity }, (_, i) => (
+                  <span
+                    key={i}
+                    className={`h-3 flex-1 rounded-full ${
+                      i < c.reserved
+                        ? "bg-[#88b03f]"
+                        : i < c.reserved + c.paid
+                          ? "bg-[#1f4b50]"
+                          : i < c.reserved + c.paid + c.held
+                            ? "bg-[#fed107]"
+                            : "bg-[#121e34]/12"
+                    }`}
+                  />
+                ))}
+              </div>
+              <p className="mt-2.5 text-xs font-medium text-[#1f4b50]/90">
+                {c.paid > open ? (
+                  <span className="font-bold text-red-700">
+                    {c.paid} paid: {c.paid - open} over capacity, refund
+                  </span>
+                ) : (
+                  <>
+                    {c.paid} of {open} confirmed
+                  </>
+                )}
+                {c.reserved > 0 && <> · {c.reserved} taken by SSSA</>}
+                {c.held > 0 && <> · {c.held} paying now (held for {data?.holdMinutes ?? 3} minutes)</>}
               </p>
             </div>
-            <div className="mt-3 flex gap-1.5" aria-hidden="true">
-              {Array.from({ length: c.capacity }, (_, i) => (
-                <span
-                  key={i}
-                  className={`h-3 flex-1 rounded-full ${
-                    i < c.paid ? "bg-[#1f4b50]" : i < c.paid + c.held ? "bg-[#fed107]" : "bg-[#121e34]/12"
-                  }`}
-                />
-              ))}
-            </div>
-            <p className="mt-2.5 text-xs font-medium text-[#1f4b50]/90">
-              {c.paid > c.capacity ? (
-                <span className="font-bold text-red-700">
-                  {c.paid} paid: {c.paid - c.capacity} over capacity, refund
-                </span>
-              ) : (
-                <>
-                  {c.paid} of {c.capacity} confirmed
-                </>
-              )}
-              {c.held > 0 && <> · {c.held} paying now (held for {data?.holdMinutes ?? 3} minutes)</>}
-            </p>
-          </div>
-        ))}
+          );
+        })}
         {unknown && !isError && (
-          <p role="status" className="text-sm font-semibold text-[#1f4b50]/80 sm:col-span-2">
+          <p role="status" className="text-sm font-semibold text-[#1f4b50]/80 sm:col-span-3">
             Loading places…
           </p>
         )}

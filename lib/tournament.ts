@@ -1,7 +1,7 @@
 import { EMAIL } from "@/lib/site";
 import { formatKes, nameProblem } from "@/lib/camp";
 
-// The K-Arena tournament (U10 and U15) and registration at the St. Sebastian
+// The K-Arena tournament (youth U10 and U15, and adults) and registration at the St. Sebastian
 // Sports Academy, as the pages and the admin dashboard see them. The booking API
 // decides the fee, how many teams a category takes and who gets a place; the
 // numbers on the page come from it (GET /tournament), so this file can only ever
@@ -13,28 +13,42 @@ import { formatKes, nameProblem } from "@/lib/camp";
  * wording that was actually shown. Change it together with the rules and with
  * RulesVersion in the Go API (internal/registration/registration.go).
  */
-export const TOURNAMENT_RULES_VERSION = "tournament-2026-v1";
+export const TOURNAMENT_RULES_VERSION = "tournament-2026-v2";
 
 export const TOURNAMENT_NAME = "K-Arena Tournament";
 
-export type TournamentCategoryId = "u10" | "u15";
+export type TournamentCategoryId = "u10" | "u15" | "adults";
+
+/** The tournament has a youth division (U10 and U15) and an adult one. */
+export type TournamentGroup = "youth" | "adults";
 
 /** How many places of one category are taken. */
 export interface TournamentSlot {
   id: TournamentCategoryId;
   label: string;
+  group: TournamentGroup;
+  /** Every team the category takes. */
   capacity: number;
+  /** Places among them already taken by the academy's own teams, not sold here. */
+  reserved: number;
   /** Teams that have paid. */
   paid: number;
   /** Teams holding a place while their M-Pesa prompt may still be answered. */
   held: number;
+  /** Places a new team can still get. */
   left: number;
 }
+
+/** What the API says today, used only until it has answered. */
+export const DEFAULT_CATEGORIES: TournamentSlot[] = [
+  { id: "u10", label: "U10", group: "youth", capacity: 4, reserved: 1, paid: 0, held: 0, left: 3 },
+  { id: "u15", label: "U15", group: "youth", capacity: 4, reserved: 1, paid: 0, held: 0, left: 3 },
+  { id: "adults", label: "Adults", group: "adults", capacity: 6, reserved: 0, paid: 0, held: 0, left: 6 },
+];
 
 /** GET /tournament: the fee, the limits the form applies and the places left. */
 export interface TournamentInfo {
   fee: number;
-  teamsPerCategory: number;
   minPlayers: number;
   maxPlayers: number;
   rulesVersion: string;
@@ -51,9 +65,11 @@ function isSlot(v: unknown): v is TournamentSlot {
   return (
     !!s &&
     typeof s === "object" &&
-    (s.id === "u10" || s.id === "u15") &&
+    (s.id === "u10" || s.id === "u15" || s.id === "adults") &&
     isString(s.label) &&
+    (s.group === "youth" || s.group === "adults") &&
     isNumber(s.capacity) &&
+    isNumber(s.reserved) &&
     isNumber(s.paid) &&
     isNumber(s.held) &&
     isNumber(s.left)
@@ -66,7 +82,6 @@ export function isTournamentInfo(v: unknown): v is TournamentInfo {
     !!i &&
     typeof i === "object" &&
     isNumber(i.fee) &&
-    isNumber(i.teamsPerCategory) &&
     isNumber(i.minPlayers) &&
     isNumber(i.maxPlayers) &&
     isString(i.rulesVersion) &&
@@ -109,7 +124,6 @@ export interface TournamentRegistrationRecord {
 }
 
 export interface TournamentAdminData {
-  teamsPerCategory: number;
   fee: number;
   holdMinutes: number;
   categories: TournamentSlot[];
@@ -121,7 +135,6 @@ export function isTournamentAdminData(v: unknown): v is TournamentAdminData {
   return (
     !!d &&
     typeof d === "object" &&
-    isNumber(d.teamsPerCategory) &&
     isNumber(d.fee) &&
     isNumber(d.holdMinutes) &&
     Array.isArray(d.categories) &&
@@ -217,34 +230,45 @@ export interface Rule {
   body: string;
 }
 
+/** "U10 takes 4 teams (1 already taken by St. Sebastian Sports Academy), U15 takes 4 …, Adults takes 6" */
+function placesSentence(categories: TournamentSlot[]): string {
+  return categories
+    .map((c) => {
+      const taken = c.reserved > 0 ? ` (${c.reserved} already taken by St. Sebastian Sports Academy)` : "";
+      return `${c.label} takes ${c.capacity} teams${taken}`;
+    })
+    .join("; ");
+}
+
 /**
  * The tournament rules, written around the numbers the API reports so they can
  * never disagree with what the form enforces. Change the wording together with
  * TOURNAMENT_RULES_VERSION (here and in the Go API).
  */
 export function tournamentRules(
-  info: Pick<TournamentInfo, "fee" | "teamsPerCategory" | "minPlayers" | "maxPlayers" | "holdMinutes">,
+  info: Pick<TournamentInfo, "fee" | "minPlayers" | "maxPlayers" | "holdMinutes" | "categories">,
 ): Rule[] {
+  const categories = info.categories.length > 0 ? info.categories : DEFAULT_CATEGORIES;
   return [
     {
       title: "Categories and ages",
-      body: "There are two categories, U10 and U15. A U10 player must be under 10 years old and a U15 player under 15 on the first day of the tournament. The organisers may ask to see proof of age, such as a birth certificate or school ID, and a player who cannot show it may not play.",
+      body: "The tournament has a youth division and an adults division. The youth division has two categories, U10 and U15: a U10 player must be under 10 years old and a U15 player under 15 on the first day of the tournament. The adults category is for players aged 18 and over. The organisers may ask to see proof of age, such as a birth certificate or school ID, and a player who cannot show it may not play.",
     },
     {
-      title: "Six teams in each category",
-      body: `Each category takes ${info.teamsPerCategory} teams. Places are given first come, first served. A team that starts registering is held a place while it pays, for up to ${info.holdMinutes} minutes; if the M-Pesa prompt is not paid in that time, the place goes to the next team and your team can register again. A place is yours for good once your payment is confirmed.`,
+      title: "Limited places in each category",
+      body: `Places are limited: ${placesSentence(categories)}. Places are given first come, first served. A team that starts registering is held a place while it pays, for up to ${info.holdMinutes} minutes; if the M-Pesa prompt is not paid in that time, the place goes to the next team and your team can register again. A place is yours for good once your payment is confirmed.`,
     },
     {
       title: "One team per academy in each category",
-      body: "An academy or club may enter one team in each category. To enter both, tick both categories in a single registration: you pay one fee and take one place in each category.",
+      body: "An academy or club may enter one team in each category. To enter more than one category, tick them all in a single registration: you pay one fee and take one place in each.",
     },
     {
       title: "Registration fee",
-      body: `The registration fee is ${formatKes(info.fee)} per registration, whether you enter one category or both. It is paid in full by M-Pesa when you register. A confirmation SMS is sent to the number you pay from. Refunds and changes are at the discretion of management, except that if you paid for a place that had already gone to another team (for example, a payment that arrived after your ${info.holdMinutes} minutes were up), we will refund you in full.`,
+      body: `The registration fee is ${formatKes(info.fee)} per registration, whether you enter one category or several. It is paid in full by M-Pesa when you register. A confirmation SMS is sent to the number you pay from. Refunds and changes are at the discretion of management, except that if you paid for a place that had already gone to another team (for example, a payment that arrived after your ${info.holdMinutes} minutes were up), we will refund you in full.`,
     },
     {
       title: "Squads",
-      body: `Tell us the total number of players in your squad when you register, between ${info.minPlayers} and ${info.maxPlayers}. The organisers may ask for a list of your players' names and ages before your first match. Every player needs the consent of a parent or guardian to take part.`,
+      body: `Tell us the total number of players in your squad when you register, between ${info.minPlayers} and ${info.maxPlayers}. The organisers may ask for a list of your players' names and ages before your first match. Every player under 18 needs the consent of a parent or guardian to take part.`,
     },
     {
       title: "Fixtures and match rules",
